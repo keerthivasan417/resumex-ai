@@ -1,5 +1,6 @@
 const RESUME_ID_KEY = "resumex.resume_id";
 const CANDIDATE_ID_KEY = "resumex.candidate_id";
+const JOB_ID_KEY = "resumex.job_id";
 
 export function getStoredResumeId(): string | null {
   return typeof window === "undefined" ? null : window.localStorage.getItem(RESUME_ID_KEY);
@@ -12,4 +13,12 @@ export function storeResumeContext(resumeId: string, candidateId: string): void 
 
 export function getStoredCandidateId(): string {
   return typeof window === "undefined" ? "" : window.localStorage.getItem(CANDIDATE_ID_KEY) ?? "";
+}
+
+export function storeJobId(jobId: string): void {
+  window.localStorage.setItem(JOB_ID_KEY, jobId);
+}
+
+export function getStoredJobId(): string | null {
+  return typeof window === "undefined" ? null : window.localStorage.getItem(JOB_ID_KEY);
 }

@@ -1,4 +1,4 @@
-import type { ResumeSkillIntelligenceResponse, ResumeUploadResponse, ScreeningWorkflowResponse, SkillGapResponse } from "@/lib/api/types";
+import type { EvaluationReportResponse, JobCandidateListResponse, JobCandidateScreeningResponse, RecruiterStateResponse, ResumeSkillIntelligenceResponse, ResumeUploadResponse, ScreeningWorkflowResponse, SkillGapResponse } from "@/lib/api/types";
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "/backend-api").replace(/\/$/, "");
 
@@ -45,3 +45,8 @@ export function runScreening(jobId: string, resumeId: string): Promise<Screening
 export function getSkillGap(jobId: string, resumeId: string): Promise<SkillGapResponse> {
   return request<SkillGapResponse>(`/jobs/${encodeURIComponent(jobId)}/resumes/${encodeURIComponent(resumeId)}/skill-gap`);
 }
+
+export function getEvaluationReport(jobId: string, resumeId: string): Promise<EvaluationReportResponse> { return request(`/jobs/${encodeURIComponent(jobId)}/resumes/${encodeURIComponent(resumeId)}/report`); }
+export function getJobCandidates(jobId: string): Promise<JobCandidateListResponse> { return request(`/jobs/${encodeURIComponent(jobId)}/candidates`); }
+export function getCandidateScreening(jobId: string, candidateId: string): Promise<JobCandidateScreeningResponse> { return request(`/jobs/${encodeURIComponent(jobId)}/candidates/${encodeURIComponent(candidateId)}/screening`); }
+export function updateRecruiterState(screeningId: string, state: { recruiter_stage?: RecruiterStateResponse["recruiter_stage"]; shortlisted?: boolean }): Promise<RecruiterStateResponse> { return request(`/screenings/${encodeURIComponent(screeningId)}/recruiter-state`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(state) }); }

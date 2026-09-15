@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { ApiError, getSkillGap, runScreening } from "@/lib/api/client";
-import { getStoredResumeId } from "@/lib/resume-session";
+import { getStoredResumeId, storeJobId } from "@/lib/resume-session";
 import { presentMatchingReport } from "@/lib/matching-presentation";
 import type { MatchingReport, JobRequirement } from "@/types/matching";
 import { MatchHeader } from "@/components/matches/match-header";
@@ -30,6 +30,7 @@ export default function MatchesPage() {
     try {
       const screening = await runScreening(jobId.trim(), resumeId);
       const gaps = await getSkillGap(jobId.trim(), resumeId);
+      storeJobId(jobId.trim());
       setReport(presentMatchingReport(screening, gaps));
     } catch (requestError) {
       setReport(null);

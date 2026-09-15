@@ -85,3 +85,17 @@ export interface LearningRecommendationResponse {
   resource_title: string;
   resource_url: string;
 }
+
+export interface RecruiterStateResponse { screening_result_id: string; recruiter_stage: "new" | "reviewing" | "shortlisted" | "on_hold" | "rejected"; shortlisted: boolean; recruiter_updated_at: string | null; }
+export interface JobCandidateScreeningResponse extends RecruiterStateResponse { candidate_id: string; candidate_name: string; resume_id: string | null; overall_score: number | null; automated_status: string; }
+export interface JobCandidateListResponse { job_id: string; candidates: JobCandidateScreeningResponse[]; }
+export interface EvaluationReportResponse {
+  candidate_id: string; resume_id: string; job_id: string; screening_result_id: string; overall_score: number; deterministic_score: number; automated_status: string;
+  recruiter_state: RecruiterStateResponse;
+  required_alignment: ReportRequirementResponse[]; preferred_alignment: ReportRequirementResponse[];
+  semantic_matching: { persisted_semantic_evidence_count: number; requirements_with_semantic_evidence: number; note: string };
+  github_context: { available: boolean; username: string | null; source: string | null; fetched_at: string | null; signals: Array<{ id: string; signal_type: string; label: string; normalized_skill: string | null; source_url: string | null; observed_at: string | null; details: Record<string, unknown> }> };
+  skill_gap_summary: SkillGapResponse["summary"]; learning_recommendations: LearningRecommendationResponse[];
+  final_assessment: { classification: string; reason_codes: string[]; explanation: string }; generated_at: string;
+}
+export interface ReportRequirementResponse { requirement_id: string; requirement: string; importance: "required" | "preferred"; status: string; evidence_status: string | null; reason: string; evidence_snippets: string[]; semantic_evidence_count: number; }
