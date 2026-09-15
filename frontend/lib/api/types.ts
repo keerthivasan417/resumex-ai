@@ -36,3 +36,52 @@ export interface ResumeSkillIntelligenceResponse {
   resume_id: string;
   skills: ResumeSkillResponse[];
 }
+
+export interface SemanticChunkResponse {
+  vector_id: string;
+  resume_section_id: string | null;
+  chunk_text: string;
+  similarity: number;
+}
+
+export interface RequirementMatchResponse {
+  requirement_id: string;
+  requirement: string;
+  importance: "required" | "preferred";
+  status: "matched" | "partially_supported" | "unsupported";
+  supporting_skill: string | null;
+  supporting_evidence: Array<{ id: string; source_skill_evidence_id: string | null; excerpt: string; evidence_type: string }>;
+  semantic_similarity: number;
+  semantic_chunks: SemanticChunkResponse[];
+  evidence_status: string | null;
+  reason: string;
+}
+
+export interface ScreeningWorkflowResponse {
+  screening_result_id: string;
+  job_id: string;
+  resume_id: string;
+  candidate_id: string;
+  overall_score: number;
+  deterministic_score: number;
+  requirements: RequirementMatchResponse[];
+  required_breakdown: { total: number; matched: number; partially_supported: number; unsupported: number };
+  preferred_breakdown: { total: number; matched: number; partially_supported: number; unsupported: number };
+}
+
+export interface SkillGapResponse {
+  job_id: string;
+  resume_id: string;
+  candidate_id: string;
+  summary: { required_satisfied_count: number; required_partial_count: number; required_gap_count: number; preferred_gap_count: number; needs_verification_count: number; required_gaps: string[]; preferred_gaps: string[]; needs_verification: string[] };
+  requirements: Array<{ requirement_id: string; requirement: string; importance: "required" | "preferred"; skill: string | null; status: "satisfied" | "partial" | "gap" | "needs_verification"; resume_evidence_status: string | null; reason: string; recommendation: LearningRecommendationResponse | null }>;
+  recommendations: LearningRecommendationResponse[];
+}
+
+export interface LearningRecommendationResponse {
+  skill: string;
+  reason: string;
+  learning_path: string[];
+  resource_title: string;
+  resource_url: string;
+}

@@ -1,4 +1,4 @@
-import type { ResumeSkillIntelligenceResponse, ResumeUploadResponse } from "@/lib/api/types";
+import type { ResumeSkillIntelligenceResponse, ResumeUploadResponse, ScreeningWorkflowResponse, SkillGapResponse } from "@/lib/api/types";
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "/backend-api").replace(/\/$/, "");
 
@@ -36,4 +36,12 @@ export function uploadResume(candidateId: string, file: File): Promise<ResumeUpl
 
 export function getResumeSkills(resumeId: string): Promise<ResumeSkillIntelligenceResponse> {
   return request<ResumeSkillIntelligenceResponse>(`/resumes/${encodeURIComponent(resumeId)}/skills`);
+}
+
+export function runScreening(jobId: string, resumeId: string): Promise<ScreeningWorkflowResponse> {
+  return request<ScreeningWorkflowResponse>(`/screenings/jobs/${encodeURIComponent(jobId)}/resumes/${encodeURIComponent(resumeId)}`, { method: "POST" });
+}
+
+export function getSkillGap(jobId: string, resumeId: string): Promise<SkillGapResponse> {
+  return request<SkillGapResponse>(`/jobs/${encodeURIComponent(jobId)}/resumes/${encodeURIComponent(resumeId)}/skill-gap`);
 }
