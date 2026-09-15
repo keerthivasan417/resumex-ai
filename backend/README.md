@@ -49,6 +49,20 @@ Evidence is weighted by source: skills lists are weak evidence; education and ce
 curl.exe "http://127.0.0.1:8000/api/resumes/<resume-uuid>/skills"
 ```
 
+## Job intelligence and matching
+
+`POST /api/jobs` stores a job description and derives catalog-backed requirements. Explicit requirements may be marked `required` or `preferred`; a job-description line containing `preferred`, `nice to have`, `bonus`, or `plus` is treated as preferred.
+
+```powershell
+curl.exe -X POST "http://127.0.0.1:8000/api/jobs" -H "Content-Type: application/json" -d '{"title":"Backend Engineer","description":"Required Python and PostgreSQL. ReactJS is preferred."}'
+```
+
+`POST /api/jobs/{job_id}/resumes/{resume_id}/match` persists a deterministic screening result and returns requirement-level alignment with evidence snippets. Required requirements have weight 3 and preferred requirements weight 1 by default; configure `MATCH_REQUIRED_WEIGHT` and `MATCH_PREFERRED_WEIGHT` in `.env` to change that balance.
+
+```powershell
+curl.exe -X POST "http://127.0.0.1:8000/api/jobs/<job-uuid>/resumes/<resume-uuid>/match"
+```
+
 ## Run tests
 
 ```powershell

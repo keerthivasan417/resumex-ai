@@ -18,6 +18,8 @@ class Settings:
     database_url: str
     upload_directory: Path
     max_upload_size_bytes: int
+    match_required_weight: float
+    match_preferred_weight: float
 
     def __init__(self) -> None:
         self.app_name = os.getenv("APP_NAME", "ResumeX API")
@@ -32,6 +34,8 @@ class Settings:
             configured_upload_directory = Path(__file__).resolve().parents[2] / configured_upload_directory
         self.upload_directory = configured_upload_directory.resolve()
         self.max_upload_size_bytes = int(os.getenv("MAX_UPLOAD_SIZE_BYTES", "10485760"))
+        self.match_required_weight = float(os.getenv("MATCH_REQUIRED_WEIGHT", "3"))
+        self.match_preferred_weight = float(os.getenv("MATCH_PREFERRED_WEIGHT", "1"))
 
 
 settings = Settings()

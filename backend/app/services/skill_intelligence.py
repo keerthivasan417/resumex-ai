@@ -109,7 +109,7 @@ def persist_skill_intelligence(db: Session, resume: Resume, analyses: Iterable[S
             db.flush()
 
         resume_skill = ResumeSkill(
-            resume_id=resume.id,
+            resume=resume,
             skill=skill,
             status=analysis.status,
             score=analysis.score,
