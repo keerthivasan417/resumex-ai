@@ -23,6 +23,9 @@ class RequirementMatchResponse(BaseModel):
     status: str
     supporting_skill: str | None
     supporting_evidence: list[MatchEvidenceResponse]
+    semantic_similarity: float
+    semantic_chunks: list["SemanticChunkResponse"]
+    evidence_status: str | None
     reason: str
 
 
@@ -35,3 +38,12 @@ class JobMatchResponse(BaseModel):
     candidate_id: UUID
     overall_score: float
     requirements: list[RequirementMatchResponse]
+
+
+class SemanticChunkResponse(BaseModel):
+    """Candidate text chunk retrieved by pgvector cosine similarity."""
+
+    vector_id: UUID
+    resume_section_id: UUID | None
+    chunk_text: str
+    similarity: float

@@ -71,6 +71,12 @@ The vector foundation uses the local open-source `sentence-transformers/all-Mini
 
 Set `EMBEDDING_MODEL` and `EMBEDDING_DIMENSIONS` before running migrations. The configured dimension is used for the PostgreSQL `vector(n)` column and must match the selected embedding model. Changing dimensions later requires a new migration and re-embedding stored chunks.
 
+## Semantic match supplement
+
+The job-match endpoint now indexes current resume sections and job requirements with replacement semantics, so rerunning a match does not accumulate duplicate vectors. For each requirement it retrieves the top candidate resume-section chunks with pgvector cosine similarity.
+
+Semantic credit is `0` below `SEMANTIC_SIMILARITY_THRESHOLD` (default `0.65`) and otherwise `(similarity - threshold) / (1 - threshold)`. The final per-requirement credit is `(MATCH_EVIDENCE_WEIGHT × deterministic credit + MATCH_SEMANTIC_WEIGHT × semantic credit) / (MATCH_EVIDENCE_WEIGHT + MATCH_SEMANTIC_WEIGHT)`; defaults are `0.7` and `0.3`. Required/preferred weighting remains unchanged. Deterministic evidence remains the trust layer: semantic retrieval can add `partially_supported`, but cannot override a deterministic `matched` decision.
+
 ## Run tests
 
 ```powershell

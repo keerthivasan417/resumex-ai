@@ -21,3 +21,8 @@ class VectorStoreService:
     def store_text(self, db: Session, payload: TextVectorCreate):
         """Embed a supplied text chunk and persist it in the current transaction."""
         return self.repository.create(db, payload, self.embedding_service.embed(payload.chunk_text))
+
+    def replace_entity_texts(self, db: Session, payloads: list[TextVectorCreate]):
+        """Embed and atomically replace all chunks for a single indexed entity."""
+        embeddings = [self.embedding_service.embed(payload.chunk_text) for payload in payloads]
+        return self.repository.replace_entity_vectors(db, payloads, embeddings)

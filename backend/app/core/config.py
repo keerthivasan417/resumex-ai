@@ -22,6 +22,9 @@ class Settings:
     match_preferred_weight: float
     embedding_model: str
     embedding_dimensions: int
+    semantic_similarity_threshold: float
+    match_evidence_weight: float
+    match_semantic_weight: float
 
     def __init__(self) -> None:
         self.app_name = os.getenv("APP_NAME", "ResumeX API")
@@ -42,6 +45,15 @@ class Settings:
         self.embedding_dimensions = int(os.getenv("EMBEDDING_DIMENSIONS", "384"))
         if self.embedding_dimensions < 1:
             raise ValueError("EMBEDDING_DIMENSIONS must be a positive integer.")
+        self.semantic_similarity_threshold = float(os.getenv("SEMANTIC_SIMILARITY_THRESHOLD", "0.65"))
+        self.match_evidence_weight = float(os.getenv("MATCH_EVIDENCE_WEIGHT", "0.7"))
+        self.match_semantic_weight = float(os.getenv("MATCH_SEMANTIC_WEIGHT", "0.3"))
+        if not 0 <= self.semantic_similarity_threshold <= 1:
+            raise ValueError("SEMANTIC_SIMILARITY_THRESHOLD must be between 0 and 1.")
+        if self.match_evidence_weight < 0 or self.match_semantic_weight < 0:
+            raise ValueError("Match weights cannot be negative.")
+        if self.match_evidence_weight + self.match_semantic_weight == 0:
+            raise ValueError("At least one match weight must be positive.")
 
 
 settings = Settings()
