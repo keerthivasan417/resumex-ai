@@ -12,6 +12,9 @@ from app.schemas.matching import JobMatchResponse
 from app.services.job_intelligence import persist_job
 from app.api.screening_response import build_job_match_response
 from app.services.screening_workflow import ScreeningWorkflowNotFound, ScreeningWorkflowService
+from app.api.skill_gap_response import build_skill_gap_response
+from app.schemas.skill_gap import SkillGapResponse
+from app.services.skill_gap import SkillGapNotFound, SkillGapService
 
 
 router = APIRouter(tags=["jobs"])
@@ -52,4 +55,17 @@ def match_resume_to_job(
     try:
         return build_job_match_response(ScreeningWorkflowService().run(db, job_id, resume_id))
     except ScreeningWorkflowNotFound as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+
+
+@router.get("/jobs/{job_id}/resumes/{resume_id}/skill-gap", response_model=SkillGapResponse)
+def get_skill_gap(
+    job_id: UUID,
+    resume_id: UUID,
+    db: Annotated[Session, Depends(get_db)],
+) -> SkillGapResponse:
+    """Return deterministic evidence-aware skill gaps and local learning guidance."""
+    try:
+        return build_skill_gap_response(SkillGapService().run(db, job_id, resume_id))
+    except SkillGapNotFound as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error

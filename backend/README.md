@@ -98,6 +98,16 @@ curl.exe "http://127.0.0.1:8000/api/candidates/<candidate-uuid>/developer-intell
 
 `GITHUB_CACHE_TTL_SECONDS` defaults to 86400, so a fresh snapshot is returned without another GitHub request. The developer-intelligence response retains the flat signal trail and also groups it into `profile`, `activity`, `repositories`, `languages`, `strengths`, and `source_metadata`. Activity uses a deterministic 180-day recent-repository window; repository quality exposes public description, stars, forks, archived state, and recent activity indicators. GitHub repository/language signals are stored separately from resume evidence. Catalog-recognized languages are linked to canonical skills for explainability, but do not create or overwrite resume skill claims.
 
+## Skill gaps and learning recommendations
+
+`GET /api/jobs/{job_id}/resumes/{resume_id}/skill-gap` derives a read-only gap report from stored job requirements and resume skill evidence. Strong or supported resume evidence is `satisfied`; weak evidence is `partial`; absent evidence is a `gap`; and unverified resume evidence or GitHub-only context is `needs_verification`. GitHub data never proves a resume skill.
+
+Each catalog-backed gap receives a deterministic recommendation from the repository-local curated catalog, including learning topics and a static resource URL. Recommendations are guidance only and carry no completion state. No data is persisted and no external service is called by this endpoint.
+
+```powershell
+curl.exe "http://127.0.0.1:8000/api/jobs/<job-uuid>/resumes/<resume-uuid>/skill-gap"
+```
+
 ## Screening evaluation
 
 The versioned synthetic dataset at `training/evaluation/datasets/v1/screening_cases.json` covers exact matches, aliases, strong and weak evidence, absent skills, skill-list-only mentions, semantic wording differences, and required/preferred weighting. It contains no real resumes or personal data.
