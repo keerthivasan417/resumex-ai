@@ -87,6 +87,17 @@ curl.exe -X POST "http://127.0.0.1:8000/api/screenings/jobs/<job-uuid>/resumes/<
 
 The response includes overall and deterministic scores, per-requirement evidence and semantic chunks, plus required/preferred matched, partial, and unsupported breakdowns. The existing job match endpoint continues to use this same workflow.
 
+## GitHub developer intelligence
+
+Candidates can optionally provide one public GitHub profile URL. `POST /api/candidates/{candidate_id}/github/sync` validates and normalizes that URL, calls only the public GitHub REST API, and caches a timestamped profile snapshot. It records public repository count, repository names/descriptions/language/stars/forks/recent activity, plus aggregated primary-language signals. No private data or GitHub HTML is fetched.
+
+```powershell
+curl.exe -X POST "http://127.0.0.1:8000/api/candidates/<candidate-uuid>/github/sync" -H "Content-Type: application/json" -d '{"github_profile_url":"https://github.com/octocat"}'
+curl.exe "http://127.0.0.1:8000/api/candidates/<candidate-uuid>/developer-intelligence"
+```
+
+`GITHUB_CACHE_TTL_SECONDS` defaults to 86400, so a fresh snapshot is returned without another GitHub request. GitHub repository/language signals are stored separately from resume evidence. Catalog-recognized languages are linked to canonical skills for explainability, but do not create or overwrite resume skill claims.
+
 ## Screening evaluation
 
 The versioned synthetic dataset at `training/evaluation/datasets/v1/screening_cases.json` covers exact matches, aliases, strong and weak evidence, absent skills, skill-list-only mentions, semantic wording differences, and required/preferred weighting. It contains no real resumes or personal data.

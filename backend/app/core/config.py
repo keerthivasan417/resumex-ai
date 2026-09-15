@@ -25,6 +25,9 @@ class Settings:
     semantic_similarity_threshold: float
     match_evidence_weight: float
     match_semantic_weight: float
+    github_api_base_url: str
+    github_request_timeout_seconds: float
+    github_cache_ttl_seconds: int
 
     def __init__(self) -> None:
         self.app_name = os.getenv("APP_NAME", "ResumeX API")
@@ -54,6 +57,13 @@ class Settings:
             raise ValueError("Match weights cannot be negative.")
         if self.match_evidence_weight + self.match_semantic_weight == 0:
             raise ValueError("At least one match weight must be positive.")
+        self.github_api_base_url = os.getenv("GITHUB_API_BASE_URL", "https://api.github.com").rstrip("/")
+        self.github_request_timeout_seconds = float(os.getenv("GITHUB_REQUEST_TIMEOUT_SECONDS", "10"))
+        self.github_cache_ttl_seconds = int(os.getenv("GITHUB_CACHE_TTL_SECONDS", "86400"))
+        if self.github_request_timeout_seconds <= 0:
+            raise ValueError("GITHUB_REQUEST_TIMEOUT_SECONDS must be positive.")
+        if self.github_cache_ttl_seconds < 0:
+            raise ValueError("GITHUB_CACHE_TTL_SECONDS cannot be negative.")
 
 
 settings = Settings()

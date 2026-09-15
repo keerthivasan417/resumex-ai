@@ -1,10 +1,10 @@
 """Normalized core persistence models for ResumeX."""
 
 import uuid
-from datetime import date
+from datetime import date, datetime
 from enum import Enum
 
-from sqlalchemy import Boolean, Date, Enum as SqlEnum, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Boolean, Date, DateTime, Enum as SqlEnum, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from pgvector.sqlalchemy import Vector
@@ -71,6 +71,7 @@ class Candidate(TimestampMixin, Base):
     email: Mapped[str | None] = mapped_column(String(320), index=True)
     headline: Mapped[str | None] = mapped_column(String(500))
     location: Mapped[str | None] = mapped_column(String(255))
+    github_profile_url: Mapped[str | None] = mapped_column(String(2048))
 
     owner: Mapped["User | None"] = relationship(back_populates="candidates")
     resumes: Mapped[list["Resume"]] = relationship(back_populates="candidate", cascade="all, delete-orphan")
@@ -78,6 +79,9 @@ class Candidate(TimestampMixin, Base):
     projects: Mapped[list["Project"]] = relationship(back_populates="candidate", cascade="all, delete-orphan")
     experiences: Mapped[list["Experience"]] = relationship(back_populates="candidate", cascade="all, delete-orphan")
     screening_results: Mapped[list["ScreeningResult"]] = relationship(back_populates="candidate")
+    github_snapshot: Mapped["GitHubProfileSnapshot | None"] = relationship(
+        back_populates="candidate", cascade="all, delete-orphan", uselist=False
+    )
 
 
 class Resume(TimestampMixin, Base):
@@ -141,6 +145,50 @@ class Skill(TimestampMixin, Base):
     candidates: Mapped[list["CandidateSkill"]] = relationship(back_populates="skill")
     job_requirements: Mapped[list["JobRequirement"]] = relationship(back_populates="skill")
     resume_skills: Mapped[list["ResumeSkill"]] = relationship(back_populates="skill")
+    developer_signals: Mapped[list["DeveloperSignal"]] = relationship(back_populates="skill")
+
+
+class GitHubProfileSnapshot(TimestampMixin, Base):
+    """Cached public GitHub profile data for one candidate."""
+
+    __tablename__ = "github_profile_snapshots"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    candidate_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("candidates.id", ondelete="CASCADE"), nullable=False, unique=True, index=True
+    )
+    username: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    profile_url: Mapped[str] = mapped_column(String(2048), nullable=False)
+    profile_name: Mapped[str | None] = mapped_column(String(255))
+    public_repository_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    source: Mapped[str] = mapped_column(String(100), nullable=False, default="github_api")
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    payload: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False, default=dict)
+
+    candidate: Mapped["Candidate"] = relationship(back_populates="github_snapshot")
+    signals: Mapped[list["DeveloperSignal"]] = relationship(
+        back_populates="snapshot", cascade="all, delete-orphan"
+    )
+
+
+class DeveloperSignal(TimestampMixin, Base):
+    """Explainable public developer evidence sourced from a GitHub snapshot."""
+
+    __tablename__ = "developer_signals"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    snapshot_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("github_profile_snapshots.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    skill_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("skills.id", ondelete="SET NULL"), nullable=True)
+    signal_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    label: Mapped[str] = mapped_column(String(255), nullable=False)
+    source_url: Mapped[str | None] = mapped_column(String(2048))
+    observed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    details: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False, default=dict)
+
+    snapshot: Mapped["GitHubProfileSnapshot"] = relationship(back_populates="signals")
+    skill: Mapped["Skill | None"] = relationship(back_populates="developer_signals")
 
 
 class ResumeSkill(TimestampMixin, Base):
