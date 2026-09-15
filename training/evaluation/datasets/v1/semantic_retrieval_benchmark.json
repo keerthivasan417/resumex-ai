@@ -1,0 +1,16 @@
+{
+  "version": "1.0",
+  "chunks": [
+    {"id": "python-api-project", "text": "Built Python FastAPI services and REST APIs for customer workflows."},
+    {"id": "react-dashboard-project", "text": "Developed React dashboards and JavaScript user interfaces."},
+    {"id": "postgres-data-experience", "text": "Designed PostgreSQL schemas and optimized SQL queries for reporting."},
+    {"id": "docker-deployment-experience", "text": "Containerized backend applications with Docker and deployed them to AWS."},
+    {"id": "java-mobile-project", "text": "Implemented Android mobile features using Java and Kotlin."}
+  ],
+  "cases": [
+    {"id": "python-backend", "requirement": "Experience building Python backend APIs", "expected_relevant_chunk_ids": ["python-api-project"]},
+    {"id": "react-ui", "requirement": "React and JavaScript frontend development", "expected_relevant_chunk_ids": ["react-dashboard-project"]},
+    {"id": "postgres-database", "requirement": "PostgreSQL database design and query optimization", "expected_relevant_chunk_ids": ["postgres-data-experience"]},
+    {"id": "container-deployment", "requirement": "Docker container deployment on AWS", "expected_relevant_chunk_ids": ["docker-deployment-experience"]}
+  ]
+}

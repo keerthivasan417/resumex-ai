@@ -55,3 +55,7 @@ class VectorRepository:
             raise ValueError("All replacement chunks must belong to the same entity")
         db.execute(delete(TextVector).where(TextVector.entity_type == entity_type, TextVector.entity_id == entity_id))
         return [self.create(db, payload, embedding) for payload, embedding in zip(payloads, embeddings, strict=True)]
+
+    def delete_entity_type(self, db: Session, entity_type: str) -> None:
+        """Delete an isolated vector namespace before a benchmark re-indexes it."""
+        db.execute(delete(TextVector).where(TextVector.entity_type == entity_type))

@@ -99,6 +99,18 @@ python -m app.evaluation.screening_evaluator --output evaluation-report.json
 
 The command prints precision, recall, F1, and evidence-status accuracy, and writes a machine-readable JSON report. The evaluation uses fixed semantic similarities as a local test fixture, so it does not download the embedding model or require PostgreSQL.
 
+## Live semantic retrieval benchmark
+
+The synthetic live benchmark at `training/evaluation/datasets/v1/semantic_retrieval_benchmark.json` uses the configured local embedding model and PostgreSQL pgvector to measure real cosine retrieval. It is isolated under the `evaluation_benchmark_v1` vector namespace and removes/replaces only that namespace on each run.
+
+Apply migrations, ensure the local embedding model can be downloaded or is cached, then run from `backend`:
+
+```powershell
+python -m app.evaluation.semantic_benchmark --output semantic-benchmark-report.json
+```
+
+The report includes Top-1/3/5 hit accuracy and recall plus average relevant and irrelevant cosine similarity. This benchmark intentionally does not change production matching behavior.
+
 ## Run tests
 
 ```powershell
