@@ -87,6 +87,18 @@ curl.exe -X POST "http://127.0.0.1:8000/api/screenings/jobs/<job-uuid>/resumes/<
 
 The response includes overall and deterministic scores, per-requirement evidence and semantic chunks, plus required/preferred matched, partial, and unsupported breakdowns. The existing job match endpoint continues to use this same workflow.
 
+## Screening evaluation
+
+The versioned synthetic dataset at `training/evaluation/datasets/v1/screening_cases.json` covers exact matches, aliases, strong and weak evidence, absent skills, skill-list-only mentions, semantic wording differences, and required/preferred weighting. It contains no real resumes or personal data.
+
+Run the deterministic offline evaluation from `backend`:
+
+```powershell
+python -m app.evaluation.screening_evaluator --output evaluation-report.json
+```
+
+The command prints precision, recall, F1, and evidence-status accuracy, and writes a machine-readable JSON report. The evaluation uses fixed semantic similarities as a local test fixture, so it does not download the embedding model or require PostgreSQL.
+
 ## Run tests
 
 ```powershell

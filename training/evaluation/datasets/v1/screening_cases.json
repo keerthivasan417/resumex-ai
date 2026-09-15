@@ -1,0 +1,75 @@
+{
+  "version": "1.0",
+  "cases": [
+    {
+      "id": "exact-python-strong",
+      "categories": ["exact_skill_match", "strong_evidence", "required"],
+      "resume_sections": [{"section_type": "experience", "content": "Developed Python APIs for 3 years."}],
+      "job_description": "Required Python experience.",
+      "requirements": [{"description": "Required Python experience.", "importance": "required", "skill": "Python"}],
+      "expected": [{"requirement": "Python", "outcome": "matched", "evidence_status": "strong_evidence", "semantic_similarity": 0.91}]
+    },
+    {
+      "id": "react-alias-project",
+      "categories": ["alias", "strong_evidence", "project"],
+      "resume_sections": [{"section_type": "projects", "content": "Built ReactJS dashboards for 2 years."}],
+      "job_description": "ReactJS experience is required.",
+      "requirements": [{"description": "ReactJS experience is required.", "importance": "required", "skill": "ReactJS"}],
+      "expected": [{"requirement": "React", "outcome": "matched", "evidence_status": "strong_evidence", "semantic_similarity": 0.88}]
+    },
+    {
+      "id": "postgres-list-only",
+      "categories": ["weak_evidence", "misleading_skill_list"],
+      "resume_sections": [{"section_type": "skills", "content": "PostgreSQL, SQL, Docker"}],
+      "job_description": "PostgreSQL is required.",
+      "requirements": [{"description": "PostgreSQL is required.", "importance": "required", "skill": "PostgreSQL"}],
+      "expected": [{"requirement": "PostgreSQL", "outcome": "partially_supported", "evidence_status": "weak_evidence", "semantic_similarity": 0.78}]
+    },
+    {
+      "id": "missing-docker",
+      "categories": ["missing_skill", "required"],
+      "resume_sections": [{"section_type": "experience", "content": "Developed Python APIs for 2 years."}],
+      "job_description": "Docker is required.",
+      "requirements": [{"description": "Docker is required.", "importance": "required", "skill": "Docker"}],
+      "expected": [{"requirement": "Docker", "outcome": "unsupported", "evidence_status": "not_found", "semantic_similarity": 0.21}]
+    },
+    {
+      "id": "aws-list-only",
+      "categories": ["misleading_skill_list", "weak_evidence"],
+      "resume_sections": [{"section_type": "skills", "content": "AWS, Git, Python"}],
+      "job_description": "AWS is required.",
+      "requirements": [{"description": "AWS is required.", "importance": "required", "skill": "AWS"}],
+      "expected": [{"requirement": "AWS", "outcome": "partially_supported", "evidence_status": "weak_evidence", "semantic_similarity": 0.74}]
+    },
+    {
+      "id": "semantic-wording-difference",
+      "categories": ["semantic_wording_difference", "uncatalogued_requirement"],
+      "resume_sections": [{"section_type": "projects", "content": "Developed distributed service endpoints for customer traffic."}],
+      "job_description": "Build scalable backend services.",
+      "requirements": [{"description": "Build scalable backend services.", "importance": "required"}],
+      "expected": [{"requirement": "Build scalable backend services.", "outcome": "partially_supported", "evidence_status": "not_found", "semantic_similarity": 0.82}]
+    },
+    {
+      "id": "required-vs-preferred",
+      "categories": ["required_vs_preferred", "strong_evidence", "missing_skill"],
+      "resume_sections": [{"section_type": "experience", "content": "Implemented Python services for 2 years."}],
+      "job_description": "Python is required. Docker is preferred.",
+      "requirements": [
+        {"description": "Python is required.", "importance": "required", "skill": "Python"},
+        {"description": "Docker is preferred.", "importance": "preferred", "skill": "Docker"}
+      ],
+      "expected": [
+        {"requirement": "Python", "outcome": "matched", "evidence_status": "strong_evidence", "semantic_similarity": 0.89},
+        {"requirement": "Docker", "outcome": "unsupported", "evidence_status": "not_found", "semantic_similarity": 0.22}
+      ]
+    },
+    {
+      "id": "aws-certification",
+      "categories": ["certification", "strong_evidence", "alias"],
+      "resume_sections": [{"section_type": "certifications", "content": "AWS Certified Solutions Architect"}],
+      "job_description": "Amazon Web Services experience is required.",
+      "requirements": [{"description": "Amazon Web Services experience is required.", "importance": "required", "skill": "Amazon Web Services"}],
+      "expected": [{"requirement": "AWS", "outcome": "matched", "evidence_status": "strong_evidence", "semantic_similarity": 0.86}]
+    }
+  ]
+}

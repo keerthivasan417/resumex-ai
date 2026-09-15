@@ -14,3 +14,7 @@ __pycache__/
 # Environment variables
 .env
 .env.*
+
+# Generated evaluation artifacts
+evaluation-report.json
+backend/evaluation-report.json
