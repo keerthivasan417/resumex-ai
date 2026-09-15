@@ -77,6 +77,16 @@ The job-match endpoint now indexes current resume sections and job requirements 
 
 Semantic credit is `0` below `SEMANTIC_SIMILARITY_THRESHOLD` (default `0.65`) and otherwise `(similarity - threshold) / (1 - threshold)`. The final per-requirement credit is `(MATCH_EVIDENCE_WEIGHT × deterministic credit + MATCH_SEMANTIC_WEIGHT × semantic credit) / (MATCH_EVIDENCE_WEIGHT + MATCH_SEMANTIC_WEIGHT)`; defaults are `0.7` and `0.3`. Required/preferred weighting remains unchanged. Deterministic evidence remains the trust layer: semantic retrieval can add `partially_supported`, but cannot override a deterministic `matched` decision.
 
+## End-to-end screening workflow
+
+`POST /api/screenings/jobs/{job_id}/resumes/{resume_id}` runs one controlled sequence: existing resume skill intelligence is generated when missing, resume/job vectors are refreshed with replacement semantics, semantic candidate chunks are retrieved, deterministic and semantic signals are combined, and the final `ScreeningResult` plus evidence rows are persisted.
+
+```powershell
+curl.exe -X POST "http://127.0.0.1:8000/api/screenings/jobs/<job-uuid>/resumes/<resume-uuid>"
+```
+
+The response includes overall and deterministic scores, per-requirement evidence and semantic chunks, plus required/preferred matched, partial, and unsupported breakdowns. The existing job match endpoint continues to use this same workflow.
+
 ## Run tests
 
 ```powershell
