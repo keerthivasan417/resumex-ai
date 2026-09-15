@@ -20,6 +20,8 @@ class Settings:
     max_upload_size_bytes: int
     match_required_weight: float
     match_preferred_weight: float
+    embedding_model: str
+    embedding_dimensions: int
 
     def __init__(self) -> None:
         self.app_name = os.getenv("APP_NAME", "ResumeX API")
@@ -36,6 +38,10 @@ class Settings:
         self.max_upload_size_bytes = int(os.getenv("MAX_UPLOAD_SIZE_BYTES", "10485760"))
         self.match_required_weight = float(os.getenv("MATCH_REQUIRED_WEIGHT", "3"))
         self.match_preferred_weight = float(os.getenv("MATCH_PREFERRED_WEIGHT", "1"))
+        self.embedding_model = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+        self.embedding_dimensions = int(os.getenv("EMBEDDING_DIMENSIONS", "384"))
+        if self.embedding_dimensions < 1:
+            raise ValueError("EMBEDDING_DIMENSIONS must be a positive integer.")
 
 
 settings = Settings()

@@ -63,6 +63,14 @@ curl.exe -X POST "http://127.0.0.1:8000/api/jobs" -H "Content-Type: application/
 curl.exe -X POST "http://127.0.0.1:8000/api/jobs/<job-uuid>/resumes/<resume-uuid>/match"
 ```
 
+## Local embeddings and pgvector
+
+The vector foundation uses the local open-source `sentence-transformers/all-MiniLM-L6-v2` model, which produces 384-dimensional embeddings. It is loaded only when `LocalEmbeddingService.embed()` is called; the first runtime use downloads the model if it is not already cached locally.
+
+`text_vectors` stores generic chunks for resume or job entities with a pgvector embedding, optional source resume section, and deterministic chunk index. `VectorRepository.search_cosine()` provides basic cosine-distance retrieval only; it does not affect job matching.
+
+Set `EMBEDDING_MODEL` and `EMBEDDING_DIMENSIONS` before running migrations. The configured dimension is used for the PostgreSQL `vector(n)` column and must match the selected embedding model. Changing dimensions later requires a new migration and re-embedding stored chunks.
+
 ## Run tests
 
 ```powershell

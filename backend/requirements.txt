@@ -10,3 +10,5 @@ psycopg[binary]
 PyMuPDF
 python-docx
 python-multipart
+pgvector
+sentence-transformers

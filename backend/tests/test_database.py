@@ -25,6 +25,7 @@ def test_core_model_metadata_contains_expected_tables() -> None:
         "evidence",
         "resume_skills",
         "skill_evidence",
+        "text_vectors",
         "projects",
         "experiences",
     }

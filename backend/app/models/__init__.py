@@ -15,6 +15,7 @@ from app.models.core import (
     ScreeningResult,
     Skill,
     SkillEvidence,
+    TextVector,
     User,
 )
 
@@ -33,5 +34,6 @@ __all__ = [
     "ScreeningResult",
     "Skill",
     "SkillEvidence",
+    "TextVector",
     "User",
 ]

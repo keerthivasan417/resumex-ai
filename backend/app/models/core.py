@@ -7,7 +7,9 @@ from enum import Enum
 from sqlalchemy import Boolean, Date, Enum as SqlEnum, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from pgvector.sqlalchemy import Vector
 
+from app.core.config import settings
 from app.db.base import Base, TimestampMixin
 
 
@@ -109,6 +111,24 @@ class ResumeSection(TimestampMixin, Base):
     resume: Mapped["Resume"] = relationship(back_populates="sections")
     evidence: Mapped[list["Evidence"]] = relationship(back_populates="resume_section")
     skill_evidence: Mapped[list["SkillEvidence"]] = relationship(back_populates="resume_section")
+    vectors: Mapped[list["TextVector"]] = relationship(back_populates="resume_section")
+
+
+class TextVector(TimestampMixin, Base):
+    """A reusable embedding for a chunk of resume or job text."""
+
+    __tablename__ = "text_vectors"
+    __table_args__ = (UniqueConstraint("entity_type", "entity_id", "chunk_index", name="uq_text_vector_chunk"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    entity_type: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    entity_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    source_section_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("resume_sections.id", ondelete="SET NULL"), nullable=True)
+    chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    chunk_text: Mapped[str] = mapped_column(Text, nullable=False)
+    embedding: Mapped[list[float]] = mapped_column(Vector(settings.embedding_dimensions), nullable=False)
+
+    resume_section: Mapped["ResumeSection | None"] = relationship(back_populates="vectors")
 
 
 class Skill(TimestampMixin, Base):
