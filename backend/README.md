@@ -17,6 +17,8 @@ pip install -r requirements.txt
 
 Optionally copy `.env.example` to `.env` and adjust the non-secret application settings.
 
+For PostgreSQL, set `DATABASE_URL` in `.env` using the `postgresql+psycopg` driver URL shown in `.env.example`.
+
 ## Run the API
 
 Start the development server from the `backend` directory:
@@ -33,4 +35,12 @@ The health endpoint is available at `GET /api/health`.
 
 ```powershell
 pytest
+```
+
+## Database migrations
+
+Apply the initial schema to the PostgreSQL database configured by `DATABASE_URL`:
+
+```powershell
+alembic upgrade head
 ```
