@@ -39,3 +39,13 @@ class JobCreateResponse(BaseModel):
     title: str
     description: str
     requirements: list[JobRequirementResponse]
+
+
+class JobResponse(BaseModel):
+    """A stored job with the fields needed for selection and review."""
+
+    id: UUID
+    title: str
+    description: str
+    status: str
+    requirements: list[JobRequirementResponse]

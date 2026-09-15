@@ -3,12 +3,13 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.db.session import get_db
 from app.models.core import Candidate, DeveloperSignal, GitHubProfileSnapshot
+from app.schemas.candidate import CandidateCreateRequest, CandidateResponse
 from app.schemas.github import (
     DeveloperIntelligenceResponse,
     DeveloperSignalResponse,
@@ -29,6 +30,34 @@ from app.services.github_intelligence import (
 
 
 router = APIRouter(tags=["candidates"])
+
+
+@router.post("/candidates", response_model=CandidateResponse, status_code=status.HTTP_201_CREATED)
+def create_candidate(
+    request: CandidateCreateRequest,
+    db: Annotated[Session, Depends(get_db)],
+) -> CandidateResponse:
+    """Create the minimal candidate profile required by resume upload."""
+    full_name = request.full_name.strip()
+    if not full_name:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Candidate full name is required.")
+    candidate = Candidate(full_name=full_name)
+    db.add(candidate)
+    db.flush()
+    db.commit()
+    return _candidate_response(candidate)
+
+
+@router.get("/candidates/{candidate_id}", response_model=CandidateResponse)
+def get_candidate(
+    candidate_id: UUID,
+    db: Annotated[Session, Depends(get_db)],
+) -> CandidateResponse:
+    """Retrieve one candidate profile without loading external data."""
+    candidate = db.get(Candidate, candidate_id)
+    if candidate is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Candidate not found.")
+    return _candidate_response(candidate)
 
 
 @router.post("/candidates/{candidate_id}/github/sync", response_model=DeveloperIntelligenceResponse)
@@ -125,6 +154,18 @@ def _response(candidate: Candidate, snapshot: GitHubProfileSnapshot | None) -> D
             fetched_at=snapshot.fetched_at,
             derived_at=max((signal.observed_at for signal in snapshot.signals if signal.observed_at), default=None),
         ),
+    )
+
+
+def _candidate_response(candidate: Candidate) -> CandidateResponse:
+    """Map the local candidate profile without implying external enrichment."""
+    return CandidateResponse(
+        id=candidate.id,
+        full_name=candidate.full_name,
+        email=candidate.email,
+        headline=candidate.headline,
+        location=candidate.location,
+        github_profile_url=candidate.github_profile_url,
     )
 
 

@@ -33,9 +33,11 @@ The health endpoint is available at `GET /api/health`.
 
 ## Resume uploads
 
-`POST /api/resumes/upload` accepts an existing candidate UUID and one PDF or DOCX file. Uploads are limited to 10 MB by default, validated by extension, declared MIME type, and file signature, then stored outside Git in `UPLOAD_DIRECTORY` (default: `backend/uploads`).
+Create the minimal local candidate profile before uploading a resume. `POST /api/candidates` accepts only `full_name`; `GET /api/candidates/{candidate_id}` retrieves that profile. Resume upload accepts the returned candidate UUID and one PDF or DOCX file. Uploads are limited to 10 MB by default, validated by extension, declared MIME type, and file signature, then stored outside Git in `UPLOAD_DIRECTORY` (default: `backend/uploads`).
 
 ```powershell
+curl.exe -X POST "http://127.0.0.1:8000/api/candidates" -H "Content-Type: application/json" -d '{"full_name":"Ada Candidate"}'
+curl.exe "http://127.0.0.1:8000/api/candidates/<candidate-uuid>"
 curl.exe -X POST "http://127.0.0.1:8000/api/resumes/upload" -F "candidate_id=<candidate-uuid>" -F "file=@C:\path\to\resume.pdf;type=application/pdf"
 ```
 
@@ -53,8 +55,12 @@ curl.exe "http://127.0.0.1:8000/api/resumes/<resume-uuid>/skills"
 
 `POST /api/jobs` stores a job description and derives catalog-backed requirements. Explicit requirements may be marked `required` or `preferred`; a job-description line containing `preferred`, `nice to have`, `bonus`, or `plus` is treated as preferred.
 
+`GET /api/jobs` returns selector-ready job summaries, including normalized requirements and status. `GET /api/jobs/{job_id}` returns one such job and responds with `404` when it does not exist.
+
 ```powershell
 curl.exe -X POST "http://127.0.0.1:8000/api/jobs" -H "Content-Type: application/json" -d '{"title":"Backend Engineer","description":"Required Python and PostgreSQL. ReactJS is preferred."}'
+curl.exe "http://127.0.0.1:8000/api/jobs"
+curl.exe "http://127.0.0.1:8000/api/jobs/<job-uuid>"
 ```
 
 `POST /api/jobs/{job_id}/resumes/{resume_id}/match` persists a deterministic screening result and returns requirement-level alignment with evidence snippets. Required requirements have weight 3 and preferred requirements weight 1 by default; configure `MATCH_REQUIRED_WEIGHT` and `MATCH_PREFERRED_WEIGHT` in `.env` to change that balance.

@@ -4,10 +4,12 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.orm import Session, selectinload
 
 from app.db.session import get_db
-from app.schemas.job import JobCreateRequest, JobCreateResponse, JobRequirementResponse
+from app.models.core import Job, JobRequirement
+from app.schemas.job import JobCreateRequest, JobCreateResponse, JobRequirementResponse, JobResponse
 from app.schemas.matching import JobMatchResponse
 from app.services.job_intelligence import persist_job
 from app.api.screening_response import build_job_match_response
@@ -18,6 +20,31 @@ from app.services.skill_gap import SkillGapNotFound, SkillGapService
 
 
 router = APIRouter(tags=["jobs"])
+
+
+@router.get("/jobs", response_model=list[JobResponse])
+def list_jobs(db: Annotated[Session, Depends(get_db)]) -> list[JobResponse]:
+    """List stored jobs for deterministic frontend selection."""
+    statement = (
+        select(Job)
+        .options(selectinload(Job.requirements).selectinload(JobRequirement.skill))
+        .order_by(Job.created_at.desc())
+    )
+    return [_job_response(job) for job in db.scalars(statement)]
+
+
+@router.get("/jobs/{job_id}", response_model=JobResponse)
+def get_job(job_id: UUID, db: Annotated[Session, Depends(get_db)]) -> JobResponse:
+    """Retrieve a job and its normalized requirement summary."""
+    statement = (
+        select(Job)
+        .where(Job.id == job_id)
+        .options(selectinload(Job.requirements).selectinload(JobRequirement.skill))
+    )
+    job = db.scalar(statement)
+    if job is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found.")
+    return _job_response(job)
 
 
 @router.post("/jobs", response_model=JobCreateResponse, status_code=status.HTTP_201_CREATED)
@@ -33,6 +60,25 @@ def create_job(
         id=job.id,
         title=job.title,
         description=job.description or "",
+        requirements=[
+            JobRequirementResponse(
+                id=requirement.id,
+                description=requirement.description,
+                importance=requirement.importance.value,
+                skill=requirement.skill.name if requirement.skill else None,
+            )
+            for requirement in job.requirements
+        ],
+    )
+
+
+def _job_response(job: Job) -> JobResponse:
+    """Map persisted job data consistently for job list and detail reads."""
+    return JobResponse(
+        id=job.id,
+        title=job.title,
+        description=job.description or "",
+        status=job.status.value,
         requirements=[
             JobRequirementResponse(
                 id=requirement.id,
