@@ -108,6 +108,17 @@ Each catalog-backed gap receives a deterministic recommendation from the reposit
 curl.exe "http://127.0.0.1:8000/api/jobs/<job-uuid>/resumes/<resume-uuid>/skill-gap"
 ```
 
+## Evaluation reports and recruiter workflow
+
+`GET /api/jobs/{job_id}/resumes/{resume_id}/report` aggregates one persisted screening result into a read-only recruiter report: requirement alignment, evidence snippets, persisted semantic evidence, cached GitHub context, skill gaps, local learning recommendations, and a deterministic `strong_fit`, `potential_fit`, `needs_review`, or `low_fit` assessment with reason codes.
+
+Recruiter decisions are stored independently of the automated pipeline: `GET /api/jobs/{job_id}/candidates` lists screened candidates (with optional `recruiter_stage` and `shortlisted` filters); `GET /api/jobs/{job_id}/candidates/{candidate_id}/screening` returns the latest result; and `PATCH /api/screenings/{screening_id}/recruiter-state` updates only recruiter stage/shortlist state. These actions never modify evidence, skill intelligence, or automated score.
+
+```powershell
+curl.exe "http://127.0.0.1:8000/api/jobs/<job-uuid>/resumes/<resume-uuid>/report"
+curl.exe -X PATCH "http://127.0.0.1:8000/api/screenings/<screening-uuid>/recruiter-state" -H "Content-Type: application/json" -d '{"recruiter_stage":"shortlisted"}'
+```
+
 ## Screening evaluation
 
 The versioned synthetic dataset at `training/evaluation/datasets/v1/screening_cases.json` covers exact matches, aliases, strong and weak evidence, absent skills, skill-list-only mentions, semantic wording differences, and required/preferred weighting. It contains no real resumes or personal data.

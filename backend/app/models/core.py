@@ -42,6 +42,14 @@ class ScreeningStatus(str, Enum):
     FAILED = "failed"
 
 
+class RecruiterStage(str, Enum):
+    NEW = "new"
+    REVIEWING = "reviewing"
+    SHORTLISTED = "shortlisted"
+    ON_HOLD = "on_hold"
+    REJECTED = "rejected"
+
+
 class SkillEvidenceStatus(str, Enum):
     STRONG_EVIDENCE = "strong_evidence"
     SUPPORTED = "supported"
@@ -276,6 +284,11 @@ class ScreeningResult(TimestampMixin, Base):
     status: Mapped[ScreeningStatus] = mapped_column(SqlEnum(ScreeningStatus, name="screening_status"), default=ScreeningStatus.PENDING, nullable=False)
     score: Mapped[float | None] = mapped_column(Numeric(5, 2))
     summary: Mapped[str | None] = mapped_column(Text)
+    recruiter_stage: Mapped[RecruiterStage] = mapped_column(
+        SqlEnum(RecruiterStage, name="recruiter_stage"), default=RecruiterStage.NEW, nullable=False
+    )
+    shortlisted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    recruiter_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     candidate: Mapped["Candidate"] = relationship(back_populates="screening_results")
     job: Mapped["Job"] = relationship(back_populates="screening_results")

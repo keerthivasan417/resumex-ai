@@ -36,6 +36,8 @@ def test_core_model_metadata_contains_expected_tables() -> None:
     assert "candidate_skills" in Base.metadata.tables
     assert Base.metadata.tables["resumes"].c.candidate_id.foreign_keys
     assert Base.metadata.tables["screening_results"].c.job_id.foreign_keys
+    assert "recruiter_stage" in Base.metadata.tables["screening_results"].c
+    assert "shortlisted" in Base.metadata.tables["screening_results"].c
     assert "github_profile_url" in Base.metadata.tables["candidates"].c
     assert Base.metadata.tables["developer_signals"].c.snapshot_id.foreign_keys
 
