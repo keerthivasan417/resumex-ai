@@ -31,6 +31,14 @@ Swagger UI is available at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/do
 
 The health endpoint is available at `GET /api/health`.
 
+## Resume uploads
+
+`POST /api/resumes/upload` accepts an existing candidate UUID and one PDF or DOCX file. Uploads are limited to 10 MB by default, validated by extension, declared MIME type, and file signature, then stored outside Git in `UPLOAD_DIRECTORY` (default: `backend/uploads`).
+
+```powershell
+curl.exe -X POST "http://127.0.0.1:8000/api/resumes/upload" -F "candidate_id=<candidate-uuid>" -F "file=@C:\path\to\resume.pdf;type=application/pdf"
+```
+
 ## Run tests
 
 ```powershell

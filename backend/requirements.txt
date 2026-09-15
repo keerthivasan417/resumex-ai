@@ -7,3 +7,6 @@ httpx
 SQLAlchemy>=2.0
 alembic
 psycopg[binary]
+PyMuPDF
+python-docx
+python-multipart

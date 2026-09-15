@@ -1,6 +1,7 @@
 """Application settings loaded from environment variables."""
 
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -15,6 +16,8 @@ class Settings:
     app_env: str
     api_prefix: str
     database_url: str
+    upload_directory: Path
+    max_upload_size_bytes: int
 
     def __init__(self) -> None:
         self.app_name = os.getenv("APP_NAME", "ResumeX API")
@@ -24,6 +27,11 @@ class Settings:
             "DATABASE_URL",
             "postgresql+psycopg://resumex:resumex@localhost:5432/resumex",
         )
+        configured_upload_directory = Path(os.getenv("UPLOAD_DIRECTORY", "uploads"))
+        if not configured_upload_directory.is_absolute():
+            configured_upload_directory = Path(__file__).resolve().parents[2] / configured_upload_directory
+        self.upload_directory = configured_upload_directory.resolve()
+        self.max_upload_size_bytes = int(os.getenv("MAX_UPLOAD_SIZE_BYTES", "10485760"))
 
 
 settings = Settings()

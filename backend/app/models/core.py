@@ -78,6 +78,7 @@ class Resume(TimestampMixin, Base):
     file_name: Mapped[str] = mapped_column(String(512), nullable=False)
     storage_key: Mapped[str | None] = mapped_column(String(1024))
     mime_type: Mapped[str | None] = mapped_column(String(255))
+    raw_text: Mapped[str | None] = mapped_column(Text)
     status: Mapped[ResumeStatus] = mapped_column(SqlEnum(ResumeStatus, name="resume_status"), default=ResumeStatus.UPLOADED, nullable=False)
 
     candidate: Mapped["Candidate"] = relationship(back_populates="resumes")
