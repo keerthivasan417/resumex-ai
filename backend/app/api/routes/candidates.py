@@ -9,7 +9,15 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.db.session import get_db
 from app.models.core import Candidate, DeveloperSignal, GitHubProfileSnapshot
-from app.schemas.github import DeveloperIntelligenceResponse, DeveloperSignalResponse, GitHubSyncRequest
+from app.schemas.github import (
+    DeveloperIntelligenceResponse,
+    DeveloperSignalResponse,
+    GitHubActivityResponse,
+    GitHubProfileResponse,
+    GitHubRepositoryResponse,
+    GitHubSourceMetadataResponse,
+    GitHubSyncRequest,
+)
 from app.services.github_intelligence import (
     CandidateNotFound,
     GitHubApiError,
@@ -77,7 +85,18 @@ def _response(candidate: Candidate, snapshot: GitHubProfileSnapshot | None) -> D
             source=None,
             fetched_at=None,
             signals=[],
+            profile=None,
+            activity=None,
+            repositories=[],
+            languages=[],
+            strengths=[],
+            source_metadata=None,
         )
+    responses = [_signal_response(signal) for signal in snapshot.signals]
+    by_type: dict[str, list[DeveloperSignalResponse]] = {}
+    for signal in responses:
+        by_type.setdefault(signal.signal_type, []).append(signal)
+    quality_by_repository = {signal.label: signal for signal in by_type.get("github_repository_quality", [])}
     return DeveloperIntelligenceResponse(
         candidate_id=candidate.id,
         github_profile_url=candidate.github_profile_url,
@@ -86,16 +105,36 @@ def _response(candidate: Candidate, snapshot: GitHubProfileSnapshot | None) -> D
         public_repository_count=snapshot.public_repository_count,
         source=snapshot.source,
         fetched_at=snapshot.fetched_at,
-        signals=[
-            DeveloperSignalResponse(
-                id=signal.id,
-                signal_type=signal.signal_type,
-                label=signal.label,
-                normalized_skill=signal.skill.name if signal.skill else None,
-                source_url=signal.source_url,
-                observed_at=signal.observed_at,
-                details=signal.details,
-            )
-            for signal in snapshot.signals
+        signals=responses,
+        profile=GitHubProfileResponse(
+            username=snapshot.username,
+            name=snapshot.profile_name,
+            profile_url=snapshot.profile_url,
+            public_repository_count=snapshot.public_repository_count,
+        ),
+        activity=GitHubActivityResponse(signals=by_type.get("github_activity", [])),
+        repositories=[
+            GitHubRepositoryResponse(repository=repository, quality=quality_by_repository.get(repository.label))
+            for repository in by_type.get("github_repository", [])
         ],
+        languages=by_type.get("github_language", []) + by_type.get("github_language_breadth", []),
+        strengths=by_type.get("github_strength", []),
+        source_metadata=GitHubSourceMetadataResponse(
+            source=snapshot.source,
+            profile_url=snapshot.profile_url,
+            fetched_at=snapshot.fetched_at,
+            derived_at=max((signal.observed_at for signal in snapshot.signals if signal.observed_at), default=None),
+        ),
+    )
+
+
+def _signal_response(signal: DeveloperSignal) -> DeveloperSignalResponse:
+    return DeveloperSignalResponse(
+        id=signal.id,
+        signal_type=signal.signal_type,
+        label=signal.label,
+        normalized_skill=signal.skill.name if signal.skill else None,
+        source_url=signal.source_url,
+        observed_at=signal.observed_at,
+        details=signal.details,
     )

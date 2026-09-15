@@ -96,7 +96,7 @@ curl.exe -X POST "http://127.0.0.1:8000/api/candidates/<candidate-uuid>/github/s
 curl.exe "http://127.0.0.1:8000/api/candidates/<candidate-uuid>/developer-intelligence"
 ```
 
-`GITHUB_CACHE_TTL_SECONDS` defaults to 86400, so a fresh snapshot is returned without another GitHub request. GitHub repository/language signals are stored separately from resume evidence. Catalog-recognized languages are linked to canonical skills for explainability, but do not create or overwrite resume skill claims.
+`GITHUB_CACHE_TTL_SECONDS` defaults to 86400, so a fresh snapshot is returned without another GitHub request. The developer-intelligence response retains the flat signal trail and also groups it into `profile`, `activity`, `repositories`, `languages`, `strengths`, and `source_metadata`. Activity uses a deterministic 180-day recent-repository window; repository quality exposes public description, stars, forks, archived state, and recent activity indicators. GitHub repository/language signals are stored separately from resume evidence. Catalog-recognized languages are linked to canonical skills for explainability, but do not create or overwrite resume skill claims.
 
 ## Screening evaluation
 

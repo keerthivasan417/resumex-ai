@@ -24,6 +24,29 @@ class DeveloperSignalResponse(BaseModel):
     details: dict[str, object]
 
 
+class GitHubProfileResponse(BaseModel):
+    username: str
+    name: str | None
+    profile_url: str
+    public_repository_count: int
+
+
+class GitHubActivityResponse(BaseModel):
+    signals: list[DeveloperSignalResponse]
+
+
+class GitHubRepositoryResponse(BaseModel):
+    repository: DeveloperSignalResponse
+    quality: DeveloperSignalResponse | None
+
+
+class GitHubSourceMetadataResponse(BaseModel):
+    source: str
+    profile_url: str
+    fetched_at: datetime
+    derived_at: datetime | None
+
+
 class DeveloperIntelligenceResponse(BaseModel):
     """Cached, source-attributed public developer signals for a candidate."""
 
@@ -35,3 +58,9 @@ class DeveloperIntelligenceResponse(BaseModel):
     source: str | None
     fetched_at: datetime | None
     signals: list[DeveloperSignalResponse]
+    profile: GitHubProfileResponse | None
+    activity: GitHubActivityResponse | None
+    repositories: list[GitHubRepositoryResponse]
+    languages: list[DeveloperSignalResponse]
+    strengths: list[DeveloperSignalResponse]
+    source_metadata: GitHubSourceMetadataResponse | None

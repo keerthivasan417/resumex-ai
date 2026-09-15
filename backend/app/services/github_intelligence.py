@@ -131,6 +131,8 @@ class GitHubIngestionService:
         snapshot = candidate.github_snapshot
         now = datetime.now(timezone.utc)
         if snapshot is not None and snapshot.username.casefold() == username.casefold() and self._is_fresh(snapshot, now):
+            self.enrich_snapshot(db, snapshot, now)
+            db.flush()
             return snapshot
 
         public_data = self.api_client.fetch_public_data(username)
@@ -144,9 +146,22 @@ class GitHubIngestionService:
         snapshot.source = "github_api"
         snapshot.fetched_at = now
         snapshot.payload = self._payload(public_data)
-        snapshot.signals = self._build_signals(db, snapshot, public_data, now)
+        self.enrich_snapshot(db, snapshot, now)
         db.flush()
         return snapshot
+
+    def enrich_snapshot(self, db: Session, snapshot: GitHubProfileSnapshot, observed_at: datetime | None = None) -> None:
+        """Regenerate deterministic signals from an already cached public snapshot."""
+        payload = snapshot.payload
+        profile = payload.get("profile") if isinstance(payload, dict) else None
+        repositories = payload.get("repositories") if isinstance(payload, dict) else None
+        public_data = GitHubPublicData(
+            profile=profile if isinstance(profile, dict) else {},
+            repositories=[repository for repository in repositories if isinstance(repository, dict)]
+            if isinstance(repositories, list)
+            else [],
+        )
+        snapshot.signals = self._build_signals(db, snapshot, public_data, observed_at or datetime.now(timezone.utc))
 
     def _is_fresh(self, snapshot: GitHubProfileSnapshot, now: datetime) -> bool:
         fetched_at = snapshot.fetched_at
@@ -169,6 +184,8 @@ class GitHubIngestionService:
             )
         ]
         languages: Counter[str] = Counter()
+        recent_repository_count = 0
+        latest_activity: datetime | None = None
         for repository in public_data.repositories:
             language = self._string(repository.get("language"))
             if language:
@@ -176,6 +193,18 @@ class GitHubIngestionService:
             repository_name = self._string(repository.get("name"))
             if not repository_name:
                 continue
+            updated_at = self._string(repository.get("updated_at"))
+            updated_datetime = self._parse_timestamp(updated_at)
+            is_recent = updated_datetime is not None and observed_at - updated_datetime <= timedelta(days=180)
+            if is_recent:
+                recent_repository_count += 1
+            if updated_datetime is not None and (latest_activity is None or updated_datetime > latest_activity):
+                latest_activity = updated_datetime
+            stars = self._integer(repository.get("stargazers_count"))
+            forks = self._integer(repository.get("forks_count"))
+            has_description = bool(self._string(repository.get("description")))
+            is_archived = bool(repository.get("archived"))
+            quality_score = int(has_description) + int(stars > 0) + int(forks > 0) + int(is_recent) + int(not is_archived)
             signals.append(
                 DeveloperSignal(
                     snapshot=snapshot,
@@ -186,12 +215,45 @@ class GitHubIngestionService:
                     details={
                         "description": self._string(repository.get("description")),
                         "language": language,
-                        "stars": self._integer(repository.get("stargazers_count")),
-                        "forks": self._integer(repository.get("forks_count")),
-                        "updated_at": self._string(repository.get("updated_at")),
+                        "stars": stars,
+                        "forks": forks,
+                        "updated_at": updated_at,
                     },
                 )
             )
+            signals.append(
+                DeveloperSignal(
+                    snapshot=snapshot,
+                    signal_type="github_repository_quality",
+                    label=repository_name,
+                    source_url=self._string(repository.get("html_url")),
+                    observed_at=observed_at,
+                    details={
+                        "quality_score": quality_score,
+                        "has_description": has_description,
+                        "stars": stars,
+                        "forks": forks,
+                        "recent_activity": is_recent,
+                        "archived": is_archived,
+                    },
+                )
+            )
+        signals.append(
+            DeveloperSignal(
+                snapshot=snapshot,
+                signal_type="github_activity",
+                label="Public repository activity",
+                source_url=profile_url,
+                observed_at=observed_at,
+                details={
+                    "public_repository_count": snapshot.public_repository_count,
+                    "retrieved_repository_count": len(public_data.repositories),
+                    "recent_repository_count": recent_repository_count,
+                    "latest_repository_activity": latest_activity.isoformat() if latest_activity else None,
+                    "recent_activity_window_days": 180,
+                },
+            )
+        )
         for language, repository_count in sorted(languages.items()):
             definition = normalize_skill(language)
             skill = self._get_or_create_skill(db, definition.name, definition.category) if definition else None
@@ -204,6 +266,36 @@ class GitHubIngestionService:
                     source_url=profile_url,
                     observed_at=observed_at,
                     details={"repository_count": repository_count, "reported_language": language},
+                )
+            )
+        dominant_languages = [language for language, _ in sorted(languages.items(), key=lambda item: (-item[1], item[0]))[:3]]
+        signals.append(
+            DeveloperSignal(
+                snapshot=snapshot,
+                signal_type="github_language_breadth",
+                label="Language breadth",
+                source_url=profile_url,
+                observed_at=observed_at,
+                details={"language_count": len(languages), "dominant_languages": dominant_languages},
+            )
+        )
+        for language, repository_count in sorted(languages.items(), key=lambda item: (-item[1], item[0]))[:3]:
+            definition = normalize_skill(language)
+            skill = self._get_or_create_skill(db, definition.name, definition.category) if definition else None
+            signals.append(
+                DeveloperSignal(
+                    snapshot=snapshot,
+                    skill=skill,
+                    signal_type="github_strength",
+                    label=definition.name if definition else language,
+                    source_url=profile_url,
+                    observed_at=observed_at,
+                    details={
+                        "basis": "dominant_public_repository_language",
+                        "repository_count": repository_count,
+                        "reported_language": language,
+                        "evidence_scope": "github_public_data_only",
+                    },
                 )
             )
         return signals
@@ -222,10 +314,26 @@ class GitHubIngestionService:
         return {
             "profile": {key: profile.get(key) for key in ("login", "name", "html_url", "public_repos", "updated_at")},
             "repositories": [
-                {key: repository.get(key) for key in ("name", "html_url", "description", "language", "stargazers_count", "forks_count", "updated_at")}
+                {
+                    key: repository.get(key)
+                    for key in (
+                        "name", "html_url", "description", "language", "stargazers_count", "forks_count",
+                        "updated_at", "archived", "fork", "size", "open_issues_count",
+                    )
+                }
                 for repository in public_data.repositories
             ],
         }
+
+    @staticmethod
+    def _parse_timestamp(value: str | None) -> datetime | None:
+        if value is None:
+            return None
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+        return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=timezone.utc)
 
     @staticmethod
     def _string(value: object) -> str | None:
