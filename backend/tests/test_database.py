@@ -23,6 +23,8 @@ def test_core_model_metadata_contains_expected_tables() -> None:
         "job_requirements",
         "screening_results",
         "evidence",
+        "resume_skills",
+        "skill_evidence",
         "projects",
         "experiences",
     }

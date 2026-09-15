@@ -40,6 +40,14 @@ class ScreeningStatus(str, Enum):
     FAILED = "failed"
 
 
+class SkillEvidenceStatus(str, Enum):
+    STRONG_EVIDENCE = "strong_evidence"
+    SUPPORTED = "supported"
+    WEAK_EVIDENCE = "weak_evidence"
+    NEEDS_VERIFICATION = "needs_verification"
+    NOT_FOUND = "not_found"
+
+
 class User(TimestampMixin, Base):
     __tablename__ = "users"
 
@@ -83,6 +91,7 @@ class Resume(TimestampMixin, Base):
 
     candidate: Mapped["Candidate"] = relationship(back_populates="resumes")
     sections: Mapped[list["ResumeSection"]] = relationship(back_populates="resume", cascade="all, delete-orphan")
+    skill_intelligence: Mapped[list["ResumeSkill"]] = relationship(back_populates="resume", cascade="all, delete-orphan")
     screening_results: Mapped[list["ScreeningResult"]] = relationship(back_populates="resume")
 
 
@@ -99,6 +108,7 @@ class ResumeSection(TimestampMixin, Base):
 
     resume: Mapped["Resume"] = relationship(back_populates="sections")
     evidence: Mapped[list["Evidence"]] = relationship(back_populates="resume_section")
+    skill_evidence: Mapped[list["SkillEvidence"]] = relationship(back_populates="resume_section")
 
 
 class Skill(TimestampMixin, Base):
@@ -110,6 +120,39 @@ class Skill(TimestampMixin, Base):
 
     candidates: Mapped[list["CandidateSkill"]] = relationship(back_populates="skill")
     job_requirements: Mapped[list["JobRequirement"]] = relationship(back_populates="skill")
+    resume_skills: Mapped[list["ResumeSkill"]] = relationship(back_populates="skill")
+
+
+class ResumeSkill(TimestampMixin, Base):
+    __tablename__ = "resume_skills"
+    __table_args__ = (UniqueConstraint("resume_id", "skill_id", name="uq_resume_skill"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    resume_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("resumes.id", ondelete="CASCADE"), nullable=False, index=True)
+    skill_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("skills.id", ondelete="CASCADE"), nullable=False, index=True)
+    status: Mapped[SkillEvidenceStatus] = mapped_column(SqlEnum(SkillEvidenceStatus, name="skill_evidence_status"), nullable=False)
+    score: Mapped[int] = mapped_column(Integer, nullable=False)
+    explanation: Mapped[str] = mapped_column(Text, nullable=False)
+
+    resume: Mapped["Resume"] = relationship(back_populates="skill_intelligence")
+    skill: Mapped["Skill"] = relationship(back_populates="resume_skills")
+    evidence: Mapped[list["SkillEvidence"]] = relationship(back_populates="resume_skill", cascade="all, delete-orphan")
+
+
+class SkillEvidence(TimestampMixin, Base):
+    __tablename__ = "skill_evidence"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    resume_skill_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("resume_skills.id", ondelete="CASCADE"), nullable=False, index=True)
+    resume_section_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("resume_sections.id", ondelete="SET NULL"), nullable=True)
+    section_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    line_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    excerpt: Mapped[str] = mapped_column(Text, nullable=False)
+    weight: Mapped[int] = mapped_column(Integer, nullable=False)
+    reason: Mapped[str] = mapped_column(String(500), nullable=False)
+
+    resume_skill: Mapped["ResumeSkill"] = relationship(back_populates="evidence")
+    resume_section: Mapped["ResumeSection | None"] = relationship(back_populates="skill_evidence")
 
 
 class CandidateSkill(TimestampMixin, Base):

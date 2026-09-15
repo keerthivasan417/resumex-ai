@@ -11,8 +11,10 @@ from app.models.core import (
     Project,
     Resume,
     ResumeSection,
+    ResumeSkill,
     ScreeningResult,
     Skill,
+    SkillEvidence,
     User,
 )
 
@@ -27,7 +29,9 @@ __all__ = [
     "Project",
     "Resume",
     "ResumeSection",
+    "ResumeSkill",
     "ScreeningResult",
     "Skill",
+    "SkillEvidence",
     "User",
 ]

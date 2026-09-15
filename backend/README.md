@@ -39,6 +39,16 @@ The health endpoint is available at `GET /api/health`.
 curl.exe -X POST "http://127.0.0.1:8000/api/resumes/upload" -F "candidate_id=<candidate-uuid>" -F "file=@C:\path\to\resume.pdf;type=application/pdf"
 ```
 
+## Skill intelligence
+
+`GET /api/resumes/{resume_id}/skills` generates and stores the first deterministic skill-evidence pass when no result exists, then returns the stored explanation trail. The catalog currently normalizes common aliases such as `JS` to `JavaScript`, `ReactJS` to `React`, and `Postgres` to `PostgreSQL`.
+
+Evidence is weighted by source: skills lists are weak evidence; education and certifications are stronger; concrete implementation or duration in experience/projects is strongest. Uncatalogued terms are not inferred, and no LLM, embeddings, or external service is used.
+
+```powershell
+curl.exe "http://127.0.0.1:8000/api/resumes/<resume-uuid>/skills"
+```
+
 ## Run tests
 
 ```powershell
