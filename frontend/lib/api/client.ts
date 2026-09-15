@@ -1,0 +1,39 @@
+import type { ResumeSkillIntelligenceResponse, ResumeUploadResponse } from "@/lib/api/types";
+
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "/backend-api").replace(/\/$/, "");
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status?: number,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, init);
+  } catch {
+    throw new ApiError("The ResumeX backend is unavailable. Start the API and try again.");
+  }
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null) as { detail?: string } | null;
+    throw new ApiError(payload?.detail ?? `Backend request failed (${response.status}).`, response.status);
+  }
+  return response.json() as Promise<T>;
+}
+
+export function uploadResume(candidateId: string, file: File): Promise<ResumeUploadResponse> {
+  const formData = new FormData();
+  formData.append("candidate_id", candidateId);
+  formData.append("file", file);
+  return request<ResumeUploadResponse>("/resumes/upload", { method: "POST", body: formData });
+}
+
+export function getResumeSkills(resumeId: string): Promise<ResumeSkillIntelligenceResponse> {
+  return request<ResumeSkillIntelligenceResponse>(`/resumes/${encodeURIComponent(resumeId)}/skills`);
+}

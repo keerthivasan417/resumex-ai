@@ -9,6 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Icons } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
+import { ApiError, uploadResume } from "@/lib/api/client";
+import type { ResumeUploadResponse } from "@/lib/api/types";
+import { getStoredCandidateId, storeResumeContext } from "@/lib/resume-session";
 
 type UploadStep = "idle" | "selected" | "uploading" | "ready";
 
@@ -37,9 +40,15 @@ export function ResumeUploader() {
   const [uploadProgress, setUploadProgress] = React.useState(0);
   const [progressStage, setProgressStage] = React.useState("Ingesting document...");
   const [analysisTriggered, setAnalysisTriggered] = React.useState(false);
+  const [candidateId, setCandidateId] = React.useState("");
+  const [uploadResult, setUploadResult] = React.useState<ResumeUploadResponse | null>(null);
 
   const router = useRouter();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    setCandidateId(getStoredCandidateId());
+  }, []);
 
   // Format file size
   const formatFileSize = (bytes: number): string => {
@@ -159,6 +168,7 @@ export function ResumeUploader() {
     setDuplicateNotice(null);
     setUploadProgress(0);
     setAnalysisTriggered(false);
+    setUploadResult(null);
     setStep("idle");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -173,33 +183,28 @@ export function ResumeUploader() {
     }
   };
 
-  // Start upload / processing simulation (local state only, ready for future API integration)
-  const handleStartUpload = () => {
+  const handleStartUpload = async () => {
+    if (!fileInfo) return;
+    if (!candidateId.trim()) {
+      setErrorMessage("Enter the existing candidate UUID required by the ResumeX backend before uploading.");
+      return;
+    }
+    setErrorMessage(null);
     setStep("uploading");
     setUploadProgress(10);
     setProgressStage("Uploading document to ingestion buffer...");
-
-    const t1 = setTimeout(() => {
-      setUploadProgress(45);
-      setProgressStage("Extracting text and formatting layers...");
-    }, 450);
-
-    const t2 = setTimeout(() => {
-      setUploadProgress(80);
-      setProgressStage("Verifying document structure & sections...");
-    }, 900);
-
-    const t3 = setTimeout(() => {
+    try {
+      const result = await uploadResume(candidateId.trim(), fileInfo.file);
+      storeResumeContext(result.id, result.candidate_id);
+      setUploadResult(result);
       setUploadProgress(100);
       setProgressStage("Ingestion complete. Ready for claim analysis.");
       setStep("ready");
-    }, 1300);
-
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-    };
+    } catch (error) {
+      setStep("selected");
+      setUploadProgress(0);
+      setErrorMessage(error instanceof ApiError ? error.message : "Resume upload failed. Please try again.");
+    }
   };
 
   return (
@@ -372,6 +377,17 @@ export function ResumeUploader() {
           </CardHeader>
 
           <CardContent className="p-6 space-y-4">
+            <label className="block space-y-1.5 text-xs">
+              <span className="font-semibold text-zinc-900">Existing Candidate ID</span>
+              <input
+                type="text"
+                value={candidateId}
+                onChange={(event) => setCandidateId(event.target.value)}
+                placeholder="Candidate UUID from ResumeX"
+                className="h-9 w-full rounded-md border border-zinc-200 px-3 font-mono text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-brand-600"
+              />
+              <span className="block text-zinc-500">The backend associates each uploaded resume with an existing candidate.</span>
+            </label>
             {/* File Info Bar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-md border border-zinc-200 bg-zinc-50/70">
               <div className="flex items-center gap-3 min-w-0">
@@ -567,7 +583,7 @@ export function ResumeUploader() {
               <div>
                 <span className="text-zinc-400 font-mono block">Section Segments</span>
                 <span className="font-mono font-medium text-zinc-800 block mt-0.5">
-                  4 Detected Blocks
+                  {uploadResult?.sections.length ?? 0} Detected Blocks
                 </span>
               </div>
             </div>
