@@ -6,7 +6,23 @@ from uuid import uuid4
 import fitz
 import pytest
 from docx import Document
+from sqlalchemy.dialects import postgresql
 
+from app.models.core import (
+    Job,
+    JobRequirement,
+    JobStatus,
+    RecruiterStage,
+    RequirementImportance,
+    Resume,
+    ResumeSkill,
+    ResumeStatus,
+    ScreeningResult,
+    ScreeningStatus,
+    SkillEvidenceStatus,
+    User,
+    UserStatus,
+)
 from app.services.resume_extraction import detect_sections, extract_text
 from app.services.resume_upload import UploadValidationError, persist_resume, validate_upload
 
@@ -103,3 +119,24 @@ def test_persistence_builds_resume_and_sections() -> None:
     assert db.flushed is True
     assert resume.raw_text == "CONTACT\njane@example.com\nSKILLS\nPython"
     assert [section.section_type for section in resume.sections] == ["contact", "skills"]
+    assert resume.status.value == "ready"
+
+
+@pytest.mark.parametrize(
+    ("column", "member", "expected"),
+    [
+        (User.__table__.c.status, UserStatus.ACTIVE, "active"),
+        (Resume.__table__.c.status, ResumeStatus.READY, "ready"),
+        (Job.__table__.c.status, JobStatus.DRAFT, "draft"),
+        (JobRequirement.__table__.c.importance, RequirementImportance.REQUIRED, "required"),
+        (ScreeningResult.__table__.c.status, ScreeningStatus.PENDING, "pending"),
+        (ScreeningResult.__table__.c.recruiter_stage, RecruiterStage.NEW, "new"),
+        (ResumeSkill.__table__.c.status, SkillEvidenceStatus.SUPPORTED, "supported"),
+    ],
+)
+def test_postgresql_enum_bindings_use_existing_lowercase_labels(column, member, expected) -> None:
+    """PostgreSQL receives the labels created by the existing Alembic schema."""
+    processor = column.type.bind_processor(postgresql.dialect())
+
+    assert processor is not None
+    assert processor(member) == expected

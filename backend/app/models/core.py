@@ -13,6 +13,11 @@ from app.core.config import settings
 from app.db.base import Base, TimestampMixin
 
 
+def _enum_values(enum_class: type[Enum]) -> list[str]:
+    """Persist string enum values, matching the PostgreSQL enum labels."""
+    return [str(member.value) for member in enum_class]
+
+
 class UserStatus(str, Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
@@ -64,7 +69,11 @@ class User(TimestampMixin, Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True, nullable=False)
     display_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    status: Mapped[UserStatus] = mapped_column(SqlEnum(UserStatus, name="user_status"), default=UserStatus.ACTIVE, nullable=False)
+    status: Mapped[UserStatus] = mapped_column(
+        SqlEnum(UserStatus, name="user_status", values_callable=_enum_values),
+        default=UserStatus.ACTIVE,
+        nullable=False,
+    )
 
     candidates: Mapped[list["Candidate"]] = relationship(back_populates="owner")
     jobs: Mapped[list["Job"]] = relationship(back_populates="owner")
@@ -101,7 +110,11 @@ class Resume(TimestampMixin, Base):
     storage_key: Mapped[str | None] = mapped_column(String(1024))
     mime_type: Mapped[str | None] = mapped_column(String(255))
     raw_text: Mapped[str | None] = mapped_column(Text)
-    status: Mapped[ResumeStatus] = mapped_column(SqlEnum(ResumeStatus, name="resume_status"), default=ResumeStatus.UPLOADED, nullable=False)
+    status: Mapped[ResumeStatus] = mapped_column(
+        SqlEnum(ResumeStatus, name="resume_status", values_callable=_enum_values),
+        default=ResumeStatus.UPLOADED,
+        nullable=False,
+    )
 
     candidate: Mapped["Candidate"] = relationship(back_populates="resumes")
     sections: Mapped[list["ResumeSection"]] = relationship(back_populates="resume", cascade="all, delete-orphan")
@@ -206,7 +219,9 @@ class ResumeSkill(TimestampMixin, Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     resume_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("resumes.id", ondelete="CASCADE"), nullable=False, index=True)
     skill_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("skills.id", ondelete="CASCADE"), nullable=False, index=True)
-    status: Mapped[SkillEvidenceStatus] = mapped_column(SqlEnum(SkillEvidenceStatus, name="skill_evidence_status"), nullable=False)
+    status: Mapped[SkillEvidenceStatus] = mapped_column(
+        SqlEnum(SkillEvidenceStatus, name="skill_evidence_status", values_callable=_enum_values), nullable=False
+    )
     score: Mapped[int] = mapped_column(Integer, nullable=False)
     explanation: Mapped[str] = mapped_column(Text, nullable=False)
 
@@ -251,7 +266,11 @@ class Job(TimestampMixin, Base):
     company_name: Mapped[str] = mapped_column(String(255), nullable=False)
     location: Mapped[str | None] = mapped_column(String(255))
     description: Mapped[str | None] = mapped_column(Text)
-    status: Mapped[JobStatus] = mapped_column(SqlEnum(JobStatus, name="job_status"), default=JobStatus.DRAFT, nullable=False)
+    status: Mapped[JobStatus] = mapped_column(
+        SqlEnum(JobStatus, name="job_status", values_callable=_enum_values),
+        default=JobStatus.DRAFT,
+        nullable=False,
+    )
 
     owner: Mapped["User | None"] = relationship(back_populates="jobs")
     requirements: Mapped[list["JobRequirement"]] = relationship(back_populates="job", cascade="all, delete-orphan")
@@ -265,7 +284,11 @@ class JobRequirement(TimestampMixin, Base):
     job_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("jobs.id", ondelete="CASCADE"), nullable=False, index=True)
     skill_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("skills.id", ondelete="SET NULL"), nullable=True)
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    importance: Mapped[RequirementImportance] = mapped_column(SqlEnum(RequirementImportance, name="requirement_importance"), default=RequirementImportance.REQUIRED, nullable=False)
+    importance: Mapped[RequirementImportance] = mapped_column(
+        SqlEnum(RequirementImportance, name="requirement_importance", values_callable=_enum_values),
+        default=RequirementImportance.REQUIRED,
+        nullable=False,
+    )
     minimum_years: Mapped[float | None] = mapped_column(Numeric(4, 1))
 
     job: Mapped["Job"] = relationship(back_populates="requirements")
@@ -281,11 +304,17 @@ class ScreeningResult(TimestampMixin, Base):
     candidate_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("candidates.id", ondelete="CASCADE"), nullable=False, index=True)
     job_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("jobs.id", ondelete="CASCADE"), nullable=False, index=True)
     resume_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("resumes.id", ondelete="SET NULL"), nullable=True)
-    status: Mapped[ScreeningStatus] = mapped_column(SqlEnum(ScreeningStatus, name="screening_status"), default=ScreeningStatus.PENDING, nullable=False)
+    status: Mapped[ScreeningStatus] = mapped_column(
+        SqlEnum(ScreeningStatus, name="screening_status", values_callable=_enum_values),
+        default=ScreeningStatus.PENDING,
+        nullable=False,
+    )
     score: Mapped[float | None] = mapped_column(Numeric(5, 2))
     summary: Mapped[str | None] = mapped_column(Text)
     recruiter_stage: Mapped[RecruiterStage] = mapped_column(
-        SqlEnum(RecruiterStage, name="recruiter_stage"), default=RecruiterStage.NEW, nullable=False
+        SqlEnum(RecruiterStage, name="recruiter_stage", values_callable=_enum_values),
+        default=RecruiterStage.NEW,
+        nullable=False,
     )
     shortlisted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     recruiter_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
