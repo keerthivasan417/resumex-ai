@@ -18,7 +18,7 @@ export function CodingProfilesCard({ profiles }: CodingProfilesCardProps) {
               Competitive & Algorithmic Coding Platforms
             </CardTitle>
             <p className="text-xs text-zinc-500 mt-0.5">
-              Empirical algorithmic consistency and problem-solving benchmarks from competitive programming handles.
+              Competitive-platform data is not provided by the developer-intelligence endpoint.
             </p>
           </div>
           <Badge variant="neutral" className="text-[10px] font-mono">
@@ -28,7 +28,9 @@ export function CodingProfilesCard({ profiles }: CodingProfilesCardProps) {
       </CardHeader>
 
       <CardContent className="p-5 space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {profiles.length === 0 ? (
+          <p className="text-xs text-zinc-500">Not provided by the developer-intelligence source.</p>
+        ) : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {profiles.map((p) => {
             const isConnected = p.status === "connected" || p.status === "linked";
 
@@ -120,7 +122,7 @@ export function CodingProfilesCard({ profiles }: CodingProfilesCardProps) {
               </div>
             );
           })}
-        </div>
+        </div>}
       </CardContent>
     </Card>
   );

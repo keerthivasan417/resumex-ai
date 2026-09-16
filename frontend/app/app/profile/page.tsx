@@ -1,7 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { getMockDeveloperProfile } from "@/lib/mock-profile";
+import { ApiError, getDeveloperIntelligence } from "@/lib/api/client";
+import { presentDeveloperProfile } from "@/lib/developer-profile-presentation";
+import { getStoredCandidateId } from "@/lib/resume-session";
+import type { DeveloperProfile } from "@/types/profile";
 import { ProfileHeader } from "@/components/profile/profile-header";
 import { ProfileInsightsCard } from "@/components/profile/profile-insights-card";
 import { LanguageDistributionCard } from "@/components/profile/language-distribution-card";
@@ -11,7 +14,40 @@ import { CodingProfilesCard } from "@/components/profile/coding-profiles-card";
 import { DevelopmentActivityTimeline } from "@/components/profile/development-activity-timeline";
 
 export default function ProfilePage() {
-  const profile = React.useMemo(() => getMockDeveloperProfile(), []);
+  const [profile, setProfile] = React.useState<DeveloperProfile | null>(null);
+  const [message, setMessage] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const candidateId = getStoredCandidateId();
+    if (!candidateId) {
+      setMessage("No resume-session candidate ID is available. Upload a resume before viewing developer intelligence.");
+      return;
+    }
+
+    let current = true;
+    getDeveloperIntelligence(candidateId)
+      .then((response) => {
+        if (!current) return;
+        if (!response.profile) {
+          setMessage("No GitHub data is available for this candidate.");
+          return;
+        }
+        setProfile(presentDeveloperProfile(response));
+      })
+      .catch((error: unknown) => {
+        if (!current) return;
+        setMessage(error instanceof ApiError ? error.message : "Could not load developer intelligence.");
+      });
+    return () => { current = false; };
+  }, []);
+
+  if (message) {
+    return <ProfileState message={message} />;
+  }
+
+  if (!profile) {
+    return <ProfileState message="Loading developer intelligence..." />;
+  }
 
   return (
     <div className="space-y-8">
@@ -35,6 +71,14 @@ export default function ProfilePage() {
 
       {/* 7. Development Activity & Cadence Timeline */}
       <DevelopmentActivityTimeline activities={profile.recentActivity} />
+    </div>
+  );
+}
+
+function ProfileState({ message }: { message: string }) {
+  return (
+    <div className="rounded-lg border border-zinc-200 bg-white p-12 text-center text-sm text-zinc-500">
+      {message}
     </div>
   );
 }

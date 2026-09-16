@@ -19,18 +19,20 @@ export function LanguageDistributionCard({
               Repository Language Distribution
             </CardTitle>
             <p className="text-xs text-zinc-500 mt-0.5">
-              Codebase volume and AST complexity scanned across 6 public and verified private repositories.
+              Primary languages reported across repositories returned by the linked public GitHub profile.
             </p>
           </div>
           <Badge variant="neutral" className="text-[10px] font-mono">
-            157,500 TOTAL LOC
+            REPOSITORY SIGNALS
           </Badge>
         </div>
       </CardHeader>
 
       <CardContent className="p-5 space-y-4">
         {/* Continuous Stacked Horizontal Language Bar */}
-        <div className="space-y-1.5">
+        {distribution.length === 0 ? (
+          <p className="text-xs text-zinc-500">Not provided by the developer-intelligence source.</p>
+        ) : <div className="space-y-1.5">
           <div className="h-3 w-full rounded-full overflow-hidden flex bg-zinc-100 p-0.5 gap-0.5">
             {distribution.map((lang) => (
               <div
@@ -58,7 +60,7 @@ export function LanguageDistributionCard({
               </div>
             ))}
           </div>
-        </div>
+        </div>}
 
         {/* Technical Linguistic Breakdown Table */}
         <div className="divide-y divide-zinc-100 rounded-md border border-zinc-200 overflow-hidden text-xs">

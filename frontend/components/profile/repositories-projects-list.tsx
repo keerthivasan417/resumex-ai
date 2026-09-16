@@ -14,7 +14,7 @@ interface RepositoriesProjectsListProps {
 export function RepositoriesProjectsList({ projects }: RepositoriesProjectsListProps) {
   const [selectedTech, setSelectedTech] = React.useState<string>("All");
 
-  const allTechs = ["All", "Go", "PostgreSQL", "Apache Kafka", "Docker", "TypeScript"];
+  const allTechs = ["All", ...new Set(projects.flatMap((project) => project.technologies))];
 
   const filteredProjects = React.useMemo(() => {
     if (selectedTech === "All") return projects;
@@ -30,7 +30,7 @@ export function RepositoriesProjectsList({ projects }: RepositoriesProjectsListP
               Verified Technical Projects & Repositories
             </CardTitle>
             <p className="text-xs text-zinc-500 mt-0.5">
-              Code artifacts contributing directly to candidate claim verification and architectural AST attribution.
+              Public repository metadata returned by the linked source.
             </p>
           </div>
 
@@ -55,7 +55,9 @@ export function RepositoriesProjectsList({ projects }: RepositoriesProjectsListP
       </CardHeader>
 
       <CardContent className="p-5 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {filteredProjects.length === 0 ? (
+          <p className="text-xs text-zinc-500">Not provided by the developer-intelligence source.</p>
+        ) : <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredProjects.map((project) => (
             <div
               key={project.id}
@@ -103,7 +105,7 @@ export function RepositoriesProjectsList({ projects }: RepositoriesProjectsListP
                 {/* Bottom link & relevance */}
                 <div className="flex items-center justify-between text-[11px] font-mono pt-1 text-zinc-500">
                   <span className="truncate pr-2">{project.relevance}</span>
-                  <a
+                  {project.repoUrl ? <a
                     href={project.repoUrl}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -111,12 +113,12 @@ export function RepositoriesProjectsList({ projects }: RepositoriesProjectsListP
                   >
                     View Repo
                     <Icons.arrowRight className="h-3 w-3" />
-                  </a>
+                  </a> : <span>Not provided</span>}
                 </div>
               </div>
             </div>
           ))}
-        </div>
+        </div>}
       </CardContent>
     </Card>
   );

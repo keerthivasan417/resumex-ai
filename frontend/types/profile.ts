@@ -31,7 +31,7 @@ export interface LanguageDistributionItem {
 
 export interface ActivityTimelineItem {
   id: string;
-  type: "commit" | "pr" | "repo_release" | "resume_update";
+  type: "commit" | "pr" | "repo_release" | "resume_update" | "activity";
   title: string;
   repoOrContext: string;
   timestamp: string;
@@ -66,7 +66,7 @@ export interface DeveloperProfile {
   summary: string;
   profileStrength: {
     rating: string;
-    level: "High" | "Moderate" | "Developing";
+    level: "High" | "Moderate" | "Developing" | "Not provided";
     verifiedChannelsCount: number;
     totalChannelsCount: number;
     description: string;

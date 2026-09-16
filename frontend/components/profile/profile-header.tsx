@@ -81,6 +81,9 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
         <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider font-semibold mr-1">
           Connected Profiles:
         </span>
+        {profile.socialProfiles.length === 0 && profile.codingProfiles.length === 0 && (
+          <span className="text-xs text-zinc-500">Not provided by the developer-intelligence source.</span>
+        )}
         {profile.socialProfiles.map((sp) => (
           <a
             key={sp.platform}

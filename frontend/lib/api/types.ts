@@ -14,6 +14,46 @@ export interface ResumeUploadResponse {
   sections: ResumeSectionResponse[];
 }
 
+export interface DeveloperSignalResponse {
+  id: string;
+  signal_type: string;
+  label: string;
+  normalized_skill: string | null;
+  source_url: string | null;
+  observed_at: string | null;
+  details: Record<string, unknown>;
+}
+
+export interface DeveloperIntelligenceResponse {
+  candidate_id: string;
+  github_profile_url: string | null;
+  username: string | null;
+  profile_name: string | null;
+  public_repository_count: number | null;
+  source: string | null;
+  fetched_at: string | null;
+  signals: DeveloperSignalResponse[];
+  profile: {
+    username: string;
+    name: string | null;
+    profile_url: string;
+    public_repository_count: number;
+  } | null;
+  activity: { signals: DeveloperSignalResponse[] } | null;
+  repositories: Array<{
+    repository: DeveloperSignalResponse;
+    quality: DeveloperSignalResponse | null;
+  }>;
+  languages: DeveloperSignalResponse[];
+  strengths: DeveloperSignalResponse[];
+  source_metadata: {
+    source: string;
+    profile_url: string;
+    fetched_at: string;
+    derived_at: string | null;
+  } | null;
+}
+
 export interface SkillEvidenceResponse {
   section_type: string;
   line_number: number;

@@ -22,7 +22,7 @@ export function TechnicalBreadthMatrix({ categories }: TechnicalBreadthMatrixPro
               Technical Breadth & Verification Fingerprint
             </CardTitle>
             <p className="text-xs text-zinc-500 mt-0.5">
-              Empirically grounded engineering skills organized by architecture tier and source corroboration count.
+              Developer strengths reported by the linked public source and their repository evidence counts.
             </p>
           </div>
           <Link href="/app/skills">
@@ -34,7 +34,9 @@ export function TechnicalBreadthMatrix({ categories }: TechnicalBreadthMatrixPro
       </CardHeader>
 
       <CardContent className="p-5 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {categories.length === 0 ? (
+          <p className="text-xs text-zinc-500">Not provided by the developer-intelligence source.</p>
+        ) : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {categories.map((cat) => (
             <div
               key={cat.name}
@@ -90,7 +92,7 @@ export function TechnicalBreadthMatrix({ categories }: TechnicalBreadthMatrixPro
               </div>
             </div>
           ))}
-        </div>
+        </div>}
       </CardContent>
     </Card>
   );

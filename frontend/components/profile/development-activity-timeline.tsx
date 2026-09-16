@@ -20,17 +20,19 @@ export function DevelopmentActivityTimeline({
               Verified Development Activity & Cadence
             </CardTitle>
             <p className="text-xs text-zinc-500 mt-0.5">
-              Chronological code events and PR merges linked to verified repositories.
+              Activity summaries returned by the linked public source.
             </p>
           </div>
           <Badge variant="neutral" className="text-[10px] font-mono">
-            CADENCE: HIGH CONSISTENCY
+            SOURCE ACTIVITY
           </Badge>
         </div>
       </CardHeader>
 
       <CardContent className="p-5">
-        <div className="relative pl-6 space-y-4 border-l border-zinc-200">
+        {activities.length === 0 ? (
+          <p className="text-xs text-zinc-500">Not provided by the developer-intelligence source.</p>
+        ) : <div className="relative pl-6 space-y-4 border-l border-zinc-200">
           {activities.map((act) => (
             <div key={act.id} className="relative group">
               {/* Dot */}
@@ -55,7 +57,7 @@ export function DevelopmentActivityTimeline({
               </div>
             </div>
           ))}
-        </div>
+        </div>}
       </CardContent>
     </Card>
   );
