@@ -21,6 +21,7 @@ class JobCreateRequest(BaseModel):
     description: str = Field(min_length=1)
     requirements: list[JobRequirementCreate] = Field(default_factory=list)
     company_name: str = Field(default="Unspecified", min_length=1, max_length=255)
+    location: str | None = Field(default=None, max_length=255)
 
 
 class JobRequirementResponse(BaseModel):
@@ -38,6 +39,8 @@ class JobCreateResponse(BaseModel):
     id: UUID
     title: str
     description: str
+    company_name: str
+    location: str | None
     requirements: list[JobRequirementResponse]
 
 
@@ -47,5 +50,7 @@ class JobResponse(BaseModel):
     id: UUID
     title: str
     description: str
+    company_name: str
+    location: str | None
     status: str
     requirements: list[JobRequirementResponse]

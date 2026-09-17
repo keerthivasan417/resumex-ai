@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { ApiError, getSkillGap, runScreening } from "@/lib/api/client";
+import { ApiError, getCandidate, getJob, getSkillGap, listJobs, runScreening } from "@/lib/api/client";
+import type { JobResponse } from "@/lib/api/types";
 import { getStoredResumeId, storeJobId } from "@/lib/resume-session";
 import { presentMatchingReport } from "@/lib/matching-presentation";
 import type { MatchingReport, JobRequirement } from "@/types/matching";
@@ -20,8 +21,9 @@ export default function MatchesPage() {
   const [selectedRequirement, setSelectedRequirement] = React.useState<JobRequirement | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [jobs, setJobs] = React.useState<JobResponse[]>([]);
 
-  React.useEffect(() => setResumeId(getStoredResumeId()), []);
+  React.useEffect(() => { setResumeId(getStoredResumeId()); listJobs().then(setJobs).catch(() => undefined); }, []);
 
   const loadMatch = async (jobId: string) => {
     if (!resumeId) { setError("No resume is selected. Upload a resume before running a job match."); return; }
@@ -29,9 +31,9 @@ export default function MatchesPage() {
     setLoading(true); setError(null); setSelectedRequirement(null);
     try {
       const screening = await runScreening(jobId.trim(), resumeId);
-      const gaps = await getSkillGap(jobId.trim(), resumeId);
+      const [gaps, candidate, job] = await Promise.all([getSkillGap(jobId.trim(), resumeId), getCandidate(screening.candidate_id), getJob(jobId.trim())]);
       storeJobId(jobId.trim());
-      setReport(presentMatchingReport(screening, gaps));
+      setReport(presentMatchingReport(screening, gaps, { candidateName: candidate.full_name, documentName: "Selected resume", jobTitle: job.title, companyName: job.company_name, location: job.location }));
     } catch (requestError) {
       setReport(null);
       setError(requestError instanceof ApiError ? requestError.message : "Could not run the job match.");
@@ -40,8 +42,8 @@ export default function MatchesPage() {
 
   const targetJob = report?.targetJob ?? null;
   return <div className="space-y-8">
-    <MatchHeader targetJob={targetJob} candidateName={report?.candidateName ?? "No candidate loaded"} documentName={report?.documentName ?? "No resume selected"} analyzedAt={report?.analyzedAt ?? "Not evaluated"} availableJobs={[]} onSelectJob={(jobId) => { if (jobId) { setJobIdInput(jobId); void loadMatch(jobId); } else { setReport(null); } }} />
-    <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-xs"><div className="flex flex-col sm:flex-row gap-3 sm:items-end"><label className="flex-1 space-y-1.5"><span className="text-xs font-semibold text-zinc-800">Target job ID</span><input value={jobIdInput} onChange={(event) => setJobIdInput(event.target.value)} placeholder="Existing job UUID from ResumeX" className="h-9 w-full rounded-md border border-zinc-200 px-3 font-mono text-xs" /></label><Button size="sm" onClick={() => void loadMatch(jobIdInput)} disabled={loading || !resumeId}>{loading ? "Running match..." : "Run Live Match"}</Button></div><p className="mt-2 text-[11px] text-zinc-500">{resumeId ? `Selected resume: ${resumeId}` : "No resume selected. Upload a resume first."} The current backend has no job-list endpoint, so enter an existing job UUID to load its real screening data.</p></div>
+    <MatchHeader targetJob={targetJob} candidateName={report?.candidateName ?? "Not provided"} documentName={report?.documentName ?? "Not provided"} analyzedAt={report?.analyzedAt ?? "Not evaluated"} availableJobs={jobs.map((job) => ({ id: job.id, title: job.title, company: job.company_name, level: "Not provided" }))} onSelectJob={(jobId) => { if (jobId) { setJobIdInput(jobId); void loadMatch(jobId); } else { setReport(null); } }} />
+    <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-xs"><div className="flex flex-col sm:flex-row gap-3 sm:items-end"><label className="flex-1 space-y-1.5"><span className="text-xs font-semibold text-zinc-800">Target job</span><select value={jobIdInput} onChange={(event) => setJobIdInput(event.target.value)} className="h-9 w-full rounded-md border border-zinc-200 px-3 text-xs"><option value="">Select a persisted job</option>{jobs.map((job) => <option key={job.id} value={job.id}>{job.title} — {job.company_name}</option>)}</select></label><Button size="sm" onClick={() => void loadMatch(jobIdInput)} disabled={loading || !resumeId || !jobIdInput}>{loading ? "Running match..." : "Run Live Match"}</Button></div><p className="mt-2 text-[11px] text-zinc-500">{resumeId ? "A selected resume is ready for screening." : "No resume selected. Upload a resume first."}</p></div>
     {error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
     {loading && <div className="rounded-lg border border-zinc-200 bg-white p-10 text-center text-xs text-zinc-500">Running deterministic screening and loading skill gaps...</div>}
     {!loading && !targetJob && !error && <NoJobEmptyState availableJobs={[]} onSelectJob={(jobId) => { setJobIdInput(jobId); void loadMatch(jobId); }} />}

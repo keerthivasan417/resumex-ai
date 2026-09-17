@@ -3,7 +3,7 @@ import type { CandidateEvaluationReport } from "@/types/report";
 
 const colors = ["#2563eb", "#16a34a", "#d97706", "#7c3aed"];
 
-export function presentEvaluationReport(report: EvaluationReportResponse): CandidateEvaluationReport {
+export function presentEvaluationReport(report: EvaluationReportResponse, context?: { candidateName?: string | null; jobTitle?: string | null; companyName?: string | null; documentName?: string | null }): CandidateEvaluationReport {
   const alignment = [...report.required_alignment, ...report.preferred_alignment];
   const strengths = alignment.filter((item) => item.status === "matched").map((item) => item.requirement);
   const verification = alignment.filter((item) => item.evidence_status === "needs_verification" || item.status === "partially_supported").map((item) => item.requirement);
@@ -11,7 +11,7 @@ export function presentEvaluationReport(report: EvaluationReportResponse): Candi
   const languages = report.github_context.signals.filter((signal) => signal.signal_type === "github_language");
   const repositories = report.github_context.signals.filter((signal) => signal.signal_type === "github_repository");
   return {
-    header: { reportId: report.screening_result_id, reportDate: new Date(report.generated_at).toLocaleString(), evaluationStatus: report.final_assessment.classification, candidateName: `Candidate ${report.candidate_id}`, targetRole: `Job ${report.job_id}`, targetCompany: "ResumeX backend", documentName: `Resume ${report.resume_id}` },
+    header: { reportId: report.screening_result_id, reportDate: new Date(report.generated_at).toLocaleString(), evaluationStatus: report.final_assessment.classification, candidateName: context?.candidateName || "Not provided", targetRole: context?.jobTitle || "Not provided", targetCompany: context?.companyName || "Not provided", documentName: context?.documentName || "Selected resume" },
     executiveSummary: { overallCompatibility: `${report.overall_score.toFixed(1)}%`, compatibilityLevel: report.final_assessment.classification === "strong_fit" ? "Strong" : report.final_assessment.classification === "low_fit" ? "Developing" : "Moderate", strongestAreas: strengths, areasNeedingVerification: verification, majorSkillGaps: gaps, verdictSummary: `${report.final_assessment.explanation} Reason codes: ${report.final_assessment.reason_codes.join(", ") || "none"}.` },
     resumeProfile: { technicalFocus: "Derived from stored screening evidence.", education: [], experience: [], certifications: [] },
     skillsEvidence: alignment.map((item) => ({ name: item.requirement, category: item.importance, status: item.evidence_status === "strong_evidence" ? "Strong evidence" : item.evidence_status === "supported" ? "Supported" : item.evidence_status === "weak_evidence" ? "Weak evidence" : item.evidence_status === "needs_verification" ? "Needs verification" : "Not found", strength: item.status === "matched" ? "High" : item.status === "partially_supported" ? "Unverified" : "Low", sources: { skillsSection: item.evidence_snippets.length > 0, project: false, experience: false, certification: false, github: false }, keyProof: item.evidence_snippets.join(" ") || item.reason })),

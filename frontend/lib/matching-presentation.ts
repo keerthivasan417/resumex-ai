@@ -7,7 +7,7 @@ function alignmentStatus(status: string): RequirementAlignmentStatus {
   return "Missing";
 }
 
-export function presentMatchingReport(screening: ScreeningWorkflowResponse, gaps: SkillGapResponse): MatchingReport {
+export function presentMatchingReport(screening: ScreeningWorkflowResponse, gaps: SkillGapResponse, context?: { candidateName?: string | null; documentName?: string | null; jobTitle?: string | null; companyName?: string | null; location?: string | null }): MatchingReport {
   const gapByRequirement = new Map(gaps.requirements.map((gap) => [gap.requirement_id, gap]));
   const requirements: JobRequirement[] = screening.requirements.map((requirement) => {
     const gap = gapByRequirement.get(requirement.requirement_id);
@@ -33,11 +33,11 @@ export function presentMatchingReport(screening: ScreeningWorkflowResponse, gaps
   const partialCount = screening.requirements.filter((item) => item.status === "partially_supported").length;
   const targetJob: TargetJob = {
     id: screening.job_id,
-    title: `Job ${screening.job_id}`,
-    company: "ResumeX backend",
-    department: "Screening workflow",
-    level: "Live",
-    location: "Backend-provided role",
+    title: context?.jobTitle || "Not provided",
+    company: context?.companyName || "Not provided",
+    department: "Not provided",
+    level: "Not provided",
+    location: context?.location || "Not provided",
     summary: {
       overallCompatibility: `${screening.overall_score.toFixed(1)}%`,
       skillCoverage: `${matchedCount} matched / ${screening.requirements.length} requirements`,
@@ -53,5 +53,5 @@ export function presentMatchingReport(screening: ScreeningWorkflowResponse, gaps
     },
     requirements,
   };
-  return { targetJob, candidateName: `Candidate ${screening.candidate_id}`, documentName: `Resume ${screening.resume_id}`, analyzedAt: "Just now", availableJobs: [] };
+  return { targetJob, candidateName: context?.candidateName || "Not provided", documentName: context?.documentName || "Not provided", analyzedAt: "Not provided", availableJobs: [] };
 }

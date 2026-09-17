@@ -104,9 +104,11 @@ def test_job_list_and_detail_return_selector_data_and_missing_job_is_404() -> No
 
     assert listed.status_code == 200
     assert listed.json() == [{
-        "id": str(job.id), "title": "Backend Engineer", "description": "Required Python", "status": "open",
+        "id": str(job.id), "title": "Backend Engineer", "description": "Required Python", "company_name": "ResumeX", "location": None, "status": "open",
         "requirements": [{"id": str(requirement.id), "description": "Required Python", "importance": "required", "skill": "Python"}],
     }]
     assert detail.status_code == 200
+    assert detail.json()["company_name"] == "ResumeX"
+    assert detail.json()["location"] is None
     assert detail.json()["requirements"][0]["skill"] == "Python"
     assert missing.status_code == 404

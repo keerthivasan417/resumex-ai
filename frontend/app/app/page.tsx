@@ -78,14 +78,14 @@ export default function WorkspaceOverviewPage() {
                 <Icons.code className="h-4 w-4 text-zinc-500" />
                 <span className="font-medium text-zinc-800">GitHub Profile</span>
               </div>
-              <span className="text-[11px] font-mono text-zinc-400">Ready to link</span>
+              <span className="text-[11px] font-mono text-zinc-400">GitHub supported by backend</span>
             </div>
             <div className="flex items-center justify-between p-2.5 rounded-md border border-zinc-200 text-xs">
               <div className="flex items-center gap-2">
                 <Icons.cpu className="h-4 w-4 text-zinc-500" />
                 <span className="font-medium text-zinc-800">GitLab / Self-Hosted</span>
               </div>
-              <span className="text-[11px] font-mono text-zinc-400">Ready to link</span>
+              <span className="text-[11px] font-mono text-zinc-400">Unavailable</span>
             </div>
           </CardContent>
         </Card>
@@ -98,7 +98,7 @@ export default function WorkspaceOverviewPage() {
                 <Icons.checkCircle className="h-4 w-4" />
               </div>
               <Badge variant="success" className="text-[11px] font-mono">
-                SYSTEM ONLINE
+                BACKEND-DRIVEN
               </Badge>
             </div>
             <CardTitle className="text-base font-semibold text-zinc-900">
@@ -112,7 +112,7 @@ export default function WorkspaceOverviewPage() {
             <div className="space-y-2 text-xs">
               <div className="flex justify-between items-center text-zinc-600">
                 <span>Taxonomy Version</span>
-                <span className="font-mono text-zinc-800 font-medium">v2.4.0</span>
+                <span className="font-mono text-zinc-800 font-medium">Not provided</span>
               </div>
               <div className="flex justify-between items-center text-zinc-600">
                 <span>Grounding Mode</span>
@@ -120,7 +120,7 @@ export default function WorkspaceOverviewPage() {
               </div>
               <div className="flex justify-between items-center text-zinc-600">
                 <span>Attribution Confidence</span>
-                <span className="font-mono text-emerald-700 font-medium">99.2% Strict</span>
+                <span className="font-mono text-emerald-700 font-medium">Unavailable</span>
               </div>
             </div>
           </CardContent>

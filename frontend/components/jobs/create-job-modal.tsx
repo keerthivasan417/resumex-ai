@@ -69,36 +69,16 @@ export function CreateJobModal({
       setRequirements(initialJob.requirements);
       setStatus(initialJob.status);
     } else {
-      // Default template values for quick testing
       setTitle("");
-      setDepartment("Platform Core");
-      setLevel("Senior");
-      setLocation("San Francisco, CA");
-      setWorkArrangement("Hybrid");
+      setDepartment("");
+      setLevel("Mid");
+      setLocation("");
+      setWorkArrangement("Remote");
       setEmploymentType("Full-time");
-      setMinExperienceYears(4);
+      setMinExperienceYears(0);
       setDescription("");
       setResponsibilitiesText("");
-      setRequirements([
-        {
-          id: "req-init-1",
-          name: "Python",
-          priority: "Must have",
-          description: "Production API services & asynchronous pipelines",
-        },
-        {
-          id: "req-init-2",
-          name: "PostgreSQL",
-          priority: "Must have",
-          description: "Data modeling, migrations, query plans",
-        },
-        {
-          id: "req-init-3",
-          name: "Docker",
-          priority: "Preferred",
-          description: "Multi-stage container builds & local compose",
-        },
-      ]);
+      setRequirements([]);
       setStatus("Active");
     }
     setErrors({});
@@ -131,7 +111,7 @@ export function CreateJobModal({
       title: title.trim(),
       department: department.trim(),
       level,
-      location: location.trim() || "Remote",
+      location: location.trim() || "Not provided",
       workArrangement,
       employmentType,
       minExperienceYears: Number(minExperienceYears) || 0,
@@ -139,10 +119,7 @@ export function CreateJobModal({
       responsibilities:
         respList.length > 0
           ? respList
-          : [
-              "Lead technical design and deliver production-grade services.",
-              "Collaborate with engineering leadership on system standards.",
-            ],
+          : [],
       requirements,
       status: saveStatus,
     });
@@ -196,13 +173,13 @@ export function CreateJobModal({
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-zinc-800">
-                  Department <span className="text-red-500">*</span>
+                Company <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
-                  placeholder="e.g. Platform Core"
+                  placeholder="Company name"
                   className="h-9 w-full rounded-md border border-zinc-200 bg-white px-3 text-xs text-zinc-900 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
                 />
               </div>

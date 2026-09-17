@@ -1,10 +1,10 @@
 export type JobStatus = "Draft" | "Active" | "Paused" | "Closed";
 
-export type JobLevel = "Junior" | "Mid" | "Senior" | "Staff" | "Lead" | "Principal";
+export type JobLevel = "Junior" | "Mid" | "Senior" | "Staff" | "Lead" | "Principal" | "Not provided";
 
-export type WorkArrangement = "Remote" | "Hybrid" | "On-site";
+export type WorkArrangement = "Remote" | "Hybrid" | "On-site" | "Not provided";
 
-export type EmploymentType = "Full-time" | "Contract" | "Part-time";
+export type EmploymentType = "Full-time" | "Contract" | "Part-time" | "Not provided";
 
 export type RequirementPriority = "Must have" | "Preferred" | "Nice to have";
 

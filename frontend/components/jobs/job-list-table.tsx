@@ -32,7 +32,7 @@ export function JobListTable({
           <thead>
             <tr className="border-b border-zinc-200 bg-zinc-50/80 text-[11px] font-semibold tracking-wider text-zinc-500 uppercase">
               <th className="py-3 px-4">Role & Level</th>
-              <th className="py-3 px-4">Department</th>
+              <th className="py-3 px-4">Company</th>
               <th className="py-3 px-4">Location</th>
               <th className="py-3 px-4">Status</th>
               <th className="py-3 px-4">Requirements</th>

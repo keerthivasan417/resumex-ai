@@ -43,7 +43,7 @@ def extract_requirements(description: str, explicit_requirements: Iterable[JobRe
 
 def persist_job(db: Session, request: JobCreateRequest) -> Job:
     """Create a job and its normalized deterministic requirements."""
-    job = Job(title=request.title, company_name=request.company_name, description=request.description)
+    job = Job(title=request.title, company_name=request.company_name, location=request.location, description=request.description)
     # Attach the parent before resolving skills. Resolving a later requirement can
     # autoflush, and the session must then know about the transient children.
     db.add(job)

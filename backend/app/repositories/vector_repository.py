@@ -44,7 +44,7 @@ class VectorRepository:
     def replace_entity_vectors(
         self, db: Session, payloads: list[TextVectorCreate], embeddings: list[list[float]]
     ) -> list[TextVector]:
-        """Replace all vectors for one entity, avoiding duplicate chunks on re-indexing."""
+        """Replace vectors for one entity without recreating retained chunk identities."""
         if len(payloads) != len(embeddings):
             raise ValueError("payloads and embeddings must have the same length")
         if not payloads:
@@ -53,8 +53,28 @@ class VectorRepository:
         entity_id = payloads[0].entity_id
         if any(item.entity_type != entity_type or item.entity_id != entity_id for item in payloads):
             raise ValueError("All replacement chunks must belong to the same entity")
-        db.execute(delete(TextVector).where(TextVector.entity_type == entity_type, TextVector.entity_id == entity_id))
-        return [self.create(db, payload, embedding) for payload, embedding in zip(payloads, embeddings, strict=True)]
+        existing = list(db.scalars(select(TextVector).where(
+            TextVector.entity_type == entity_type,
+            TextVector.entity_id == entity_id,
+        )))
+        by_chunk_index = {vector.chunk_index: vector for vector in existing}
+        replacement_indexes = {payload.chunk_index for payload in payloads}
+        replaced: list[TextVector] = []
+        for payload, embedding in zip(payloads, embeddings, strict=True):
+            vector = by_chunk_index.get(payload.chunk_index)
+            if vector is None:
+                replaced.append(self.create(db, payload, embedding))
+                continue
+            vector.source_section_id = payload.source_section_id
+            vector.chunk_text = payload.chunk_text
+            vector.embedding = embedding
+            replaced.append(vector)
+
+        for vector in existing:
+            if vector.chunk_index not in replacement_indexes:
+                db.delete(vector)
+        db.flush()
+        return replaced
 
     def delete_entity_type(self, db: Session, entity_type: str) -> None:
         """Delete an isolated vector namespace before a benchmark re-indexes it."""

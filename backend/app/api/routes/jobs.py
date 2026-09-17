@@ -60,6 +60,8 @@ def create_job(
         id=job.id,
         title=job.title,
         description=job.description or "",
+        company_name=job.company_name,
+        location=job.location,
         requirements=[
             JobRequirementResponse(
                 id=requirement.id,
@@ -78,6 +80,8 @@ def _job_response(job: Job) -> JobResponse:
         id=job.id,
         title=job.title,
         description=job.description or "",
+        company_name=job.company_name,
+        location=job.location,
         status=job.status.value,
         requirements=[
             JobRequirementResponse(

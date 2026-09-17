@@ -49,7 +49,7 @@ export function Topbar({ role, onOpenMobileNav }: TopbarProps) {
             RX
           </div>
           <span className="text-xs font-medium text-zinc-700 hidden sm:inline">
-            Demo Session
+            ResumeX Session
           </span>
         </div>
       </div>

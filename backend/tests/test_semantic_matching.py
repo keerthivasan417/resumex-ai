@@ -92,3 +92,31 @@ def test_indexing_replaces_each_entity_instead_of_accumulating_chunks() -> None:
     assert len(calls) == 1
     assert calls[0][0].entity_type == "resume_section"
     assert calls[0][0].entity_id == section.id
+
+
+def test_repeated_indexing_uses_replacement_for_resume_and_job_entities() -> None:
+    """Repeated screening indexes both source types through their scoped replacement path."""
+    calls = []
+
+    class _Store:
+        def replace_entity_texts(self, db, payloads):
+            calls.append((payloads[0].entity_type, payloads[0].entity_id, payloads[0].chunk_index))
+            return []
+
+    section = SimpleNamespace(id=uuid4(), content="Python experience")
+    requirement = SimpleNamespace(id=uuid4(), description="Python API experience")
+    resume = SimpleNamespace(sections=[section], skill_intelligence=[])
+    job = SimpleNamespace(requirements=[requirement])
+    service = SemanticIndexService(_Store())
+
+    service.index_resume(None, resume)  # type: ignore[arg-type]
+    service.index_job(None, job)  # type: ignore[arg-type]
+    service.index_resume(None, resume)  # type: ignore[arg-type]
+    service.index_job(None, job)  # type: ignore[arg-type]
+
+    assert calls == [
+        ("resume_section", section.id, 0),
+        ("job_requirement", requirement.id, 0),
+        ("resume_section", section.id, 0),
+        ("job_requirement", requirement.id, 0),
+    ]

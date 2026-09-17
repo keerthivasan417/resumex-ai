@@ -14,6 +14,34 @@ export interface ResumeUploadResponse {
   sections: ResumeSectionResponse[];
 }
 
+export interface CandidateResponse {
+  id: string;
+  full_name: string;
+  email: string | null;
+  headline: string | null;
+  location: string | null;
+  github_profile_url: string | null;
+}
+
+export interface JobRequirementResponse {
+  id: string;
+  description: string;
+  importance: "required" | "preferred";
+  skill: string | null;
+}
+
+export interface JobResponse {
+  id: string;
+  title: string;
+  description: string;
+  company_name: string;
+  location: string | null;
+  status: "draft" | "open" | "closed";
+  requirements: JobRequirementResponse[];
+}
+
+export interface JobCreateResponse extends Omit<JobResponse, "status"> {}
+
 export interface DeveloperSignalResponse {
   id: string;
   signal_type: string;

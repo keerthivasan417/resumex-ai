@@ -1,4 +1,4 @@
-import type { DeveloperIntelligenceResponse, EvaluationReportResponse, JobCandidateListResponse, JobCandidateScreeningResponse, RecruiterStateResponse, ResumeSkillIntelligenceResponse, ResumeUploadResponse, ScreeningWorkflowResponse, SkillGapResponse } from "@/lib/api/types";
+import type { CandidateResponse, DeveloperIntelligenceResponse, EvaluationReportResponse, JobCandidateListResponse, JobCandidateScreeningResponse, JobCreateResponse, JobResponse, RecruiterStateResponse, ResumeSkillIntelligenceResponse, ResumeUploadResponse, ScreeningWorkflowResponse, SkillGapResponse } from "@/lib/api/types";
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "/backend-api").replace(/\/$/, "");
 
@@ -40,6 +40,12 @@ export function getResumeSkills(resumeId: string): Promise<ResumeSkillIntelligen
 
 export function getDeveloperIntelligence(candidateId: string): Promise<DeveloperIntelligenceResponse> {
   return request<DeveloperIntelligenceResponse>(`/candidates/${encodeURIComponent(candidateId)}/developer-intelligence`);
+}
+export function getCandidate(candidateId: string): Promise<CandidateResponse> { return request(`/candidates/${encodeURIComponent(candidateId)}`); }
+export function listJobs(): Promise<JobResponse[]> { return request("/jobs"); }
+export function getJob(jobId: string): Promise<JobResponse> { return request(`/jobs/${encodeURIComponent(jobId)}`); }
+export function createJob(input: { title: string; description: string; company_name?: string; location?: string | null; requirements: Array<{ description: string; importance: "required" | "preferred"; skill?: string | null }> }): Promise<JobCreateResponse> {
+  return request("/jobs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) });
 }
 
 export function runScreening(jobId: string, resumeId: string): Promise<ScreeningWorkflowResponse> {
