@@ -82,5 +82,8 @@ class ScreeningWorkflowService:
             semantic_matches=semantic_matches,
             evidence_by_requirement=evidence_by_requirement,
             deterministic_score=calculate_match_score(alignments),
-            overall_score=calculate_combined_match_score(alignments, semantic_matches),
+            # ``persist_match_result`` is intentionally idempotent.  Return the
+            # persisted score so a repeated submission cannot present a score
+            # that differs from the immutable evidence record.
+            overall_score=float(screening_result.score) if screening_result.score is not None else 0.0,
         )

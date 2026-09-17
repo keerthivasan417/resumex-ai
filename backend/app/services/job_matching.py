@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Iterable
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import settings
@@ -160,7 +160,7 @@ def persist_match_result(
     alignments: Iterable[RequirementAlignment],
     semantic_matches: Iterable[SemanticRequirementMatch] = (),
 ) -> tuple[ScreeningResult, dict[UUID, list[Evidence]]]:
-    """Persist one replaceable screening result and its copied evidence trail."""
+    """Persist an immutable automated screening result for a candidate/job/resume scope."""
     alignment_list = list(alignments)
     screening = db.scalar(
         select(ScreeningResult).where(
@@ -169,12 +169,19 @@ def persist_match_result(
             ScreeningResult.resume_id == resume.id,
         )
     )
-    if screening is None:
-        screening = ScreeningResult(candidate_id=resume.candidate_id, job_id=job.id, resume_id=resume.id)
-        db.add(screening)
-        db.flush()
-    else:
-        db.execute(delete(Evidence).where(Evidence.screening_result_id == screening.id))
+    if screening is not None:
+        # Screening submissions are idempotent.  In particular, do not replace
+        # evidence or scores (or indirectly disturb recruiter-owned state) when
+        # the same resume is submitted again for the same job.
+        existing_evidence: dict[UUID, list[Evidence]] = defaultdict(list)
+        for evidence in screening.evidence:
+            if evidence.job_requirement_id is not None:
+                existing_evidence[evidence.job_requirement_id].append(evidence)
+        return screening, existing_evidence
+
+    screening = ScreeningResult(candidate_id=resume.candidate_id, job_id=job.id, resume_id=resume.id)
+    db.add(screening)
+    db.flush()
 
     semantic_by_requirement = {match.requirement.id: match for match in semantic_matches}
     score = calculate_combined_match_score(alignment_list, semantic_by_requirement.values())

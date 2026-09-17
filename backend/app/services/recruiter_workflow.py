@@ -29,7 +29,25 @@ class RecruiterWorkflowService:
             statement = statement.where(ScreeningResult.recruiter_stage == recruiter_stage)
         if shortlisted is not None:
             statement = statement.where(ScreeningResult.shortlisted == bindparam("shortlisted", shortlisted))
-        return list(db.scalars(statement))
+        # A candidate may have several historical resume screenings for a job.
+        # The candidate pool is candidate-scoped, not screening-scoped, so expose
+        # only the canonical (most recently updated) screening for each person.
+        # Keeping this reduction in the presentation query preserves historical
+        # screening records without exposing duplicate candidate-pool rows.
+        canonical: list[ScreeningResult] = []
+        seen_candidate_ids: set[UUID] = set()
+        for screening in sorted(
+            db.scalars(statement),
+            key=lambda item: (
+                (item.updated_at or item.created_at or datetime.min.replace(tzinfo=timezone.utc)).timestamp(),
+                str(item.id),
+            ),
+            reverse=True,
+        ):
+            if screening.candidate_id not in seen_candidate_ids:
+                canonical.append(screening)
+                seen_candidate_ids.add(screening.candidate_id)
+        return canonical
 
     def get_for_candidate(self, db: Session, job_id: UUID, candidate_id: UUID) -> ScreeningResult:
         statement = (

@@ -17,7 +17,7 @@ def test_workflow_runs_existing_services_in_controlled_order(monkeypatch) -> Non
     requirement = SimpleNamespace(id=requirement_id, importance=RequirementImportance.REQUIRED, description="Python")
     job = SimpleNamespace(id=job_id, requirements=[requirement])
     resume = SimpleNamespace(id=resume_id, candidate_id=candidate_id, sections=[], skill_intelligence=[SimpleNamespace()])
-    screening = SimpleNamespace(id=uuid4())
+    screening = SimpleNamespace(id=uuid4(), score=0.0)
     calls: list[str] = []
 
     class _Index:

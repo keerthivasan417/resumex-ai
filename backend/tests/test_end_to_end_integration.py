@@ -196,13 +196,11 @@ def test_existing_routes_return_not_found_for_missing_screening_ids(monkeypatch)
     assert client.get(f"/api/jobs/{missing_id}/resumes/{missing_id}/report").status_code == 404
 
 
-def test_repeated_screening_reuses_the_same_persisted_scope() -> None:
-    """A repeat replaces evidence in the existing candidate/job/resume scope."""
+def test_repeated_screening_reuses_the_same_persisted_scope_without_replacing_automation() -> None:
+    """A repeat preserves the automated record and its recruiter-owned state."""
 
     class IdempotentSession(_Session):
         screening: ScreeningResult | None = None
-        delete_calls = 0
-
         def add(self, instance: object) -> None:
             super().add(instance)
             if isinstance(instance, ScreeningResult):
@@ -211,9 +209,6 @@ def test_repeated_screening_reuses_the_same_persisted_scope() -> None:
         def scalar(self, statement: object):
             return self.screening
 
-        def execute(self, statement: object) -> None:
-            self.delete_calls += 1
-
     db = IdempotentSession()
     requirement = SimpleNamespace(id=uuid4(), importance=SimpleNamespace(value="required"))
     job = SimpleNamespace(id=uuid4())
@@ -221,8 +216,17 @@ def test_repeated_screening_reuses_the_same_persisted_scope() -> None:
     alignment = RequirementAlignment(requirement, "unsupported", None, (), 0.0, "No stored resume evidence.")
 
     first, _ = persist_match_result(db, job, resume, (alignment,))
+    first.recruiter_stage = RecruiterStage.SHORTLISTED
+    first.shortlisted = True
+    original_score = first.score
+    original_summary = first.summary
+    original_evidence = list(first.evidence)
     second, _ = persist_match_result(db, job, resume, (alignment,))
 
     assert first is second
     assert len([item for item in db.added if isinstance(item, ScreeningResult)]) == 1
-    assert db.delete_calls == 1
+    assert second.score == original_score
+    assert second.summary == original_summary
+    assert second.evidence == original_evidence
+    assert second.recruiter_stage is RecruiterStage.SHORTLISTED
+    assert second.shortlisted is True
